@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Vida OS - Privado</title>
+    <title>Mi Vida OS - Cámara Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .hidden { display: none; }
-        #video-preview { transform: scaleX(-1); border-radius: 1rem; }
         .is-alarm { border-left: 4px solid #f59e0b; }
         .editing-mode { border: 2px solid #06b6d4 !important; background: #083344 !important; }
+        video { border-radius: 1rem; background: #000; }
+        .mirror { transform: scaleX(-1); }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-200 min-h-screen font-sans">
@@ -18,12 +19,11 @@
     <div id="auth-screen" class="fixed inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center p-6 text-center">
         <h1 class="text-4xl font-black text-white mb-8 italic tracking-tighter">MI VIDA OS</h1>
         <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 w-full max-w-sm shadow-2xl">
-            <input id="auth-user" type="text" placeholder="Tu Nombre" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none focus:border-cyan-500 border border-transparent">
-            <input id="auth-pin" type="password" inputmode="numeric" placeholder="Tu PIN" class="w-full bg-slate-800 p-4 rounded-xl mb-6 text-white text-center text-2xl outline-none focus:border-cyan-500 border border-transparent">
-            
+            <input id="auth-user" type="text" placeholder="Usuario" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none focus:border-cyan-500 border border-transparent">
+            <input id="auth-pin" type="password" inputmode="numeric" placeholder="PIN" class="w-full bg-slate-800 p-4 rounded-xl mb-6 text-white text-center text-2xl outline-none focus:border-cyan-500 border border-transparent">
             <div class="flex flex-col gap-3">
-                <button onclick="gestionarAcceso('login')" class="w-full bg-white text-black font-black py-4 rounded-xl hover:bg-cyan-400 transition">ENTRAR</button>
-                <button onclick="gestionarAcceso('signup')" class="text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white">Registrar nuevo usuario</button>
+                <button onclick="gestionarAcceso('login')" class="w-full bg-white text-black font-black py-4 rounded-xl hover:bg-cyan-400">ENTRAR</button>
+                <button onclick="gestionarAcceso('signup')" class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Crear cuenta</button>
             </div>
         </div>
     </div>
@@ -32,20 +32,20 @@
         <header class="flex justify-between items-center mb-8">
             <div>
                 <h1 id="user-display" class="text-2xl font-black text-white tracking-tighter uppercase italic"></h1>
-                <p class="text-[9px] text-cyan-500 font-bold">NUBE PRIVADA ACTIVA</p>
+                <p class="text-[9px] text-cyan-500 font-bold">MULTICÁMARA ACTIVADA</p>
             </div>
             <button onclick="location.reload()" class="text-[10px] text-red-500 font-bold border border-red-900/50 px-3 py-1 rounded-full">SALIR</button>
         </header>
 
         <div id="form-container" class="bg-slate-900 border border-slate-800 p-5 rounded-2xl mb-8 shadow-2xl transition-all">
-            <div id="edit-indicator" class="hidden text-cyan-400 text-[10px] font-bold mb-2 uppercase italic">Modo Edición Activado</div>
+            <div id="edit-indicator" class="hidden text-cyan-400 text-[10px] font-bold mb-2 uppercase italic">Modo Edición</div>
             
             <div id="foto-preview-container" class="hidden mb-4 relative">
                 <img id="foto-final" class="rounded-xl w-full border-2 border-cyan-500">
-                <button onclick="borrarFoto()" class="absolute top-2 right-2 bg-red-600 p-2 rounded-full text-white text-xs px-3">✕ Quitar</button>
+                <button onclick="borrarFoto()" class="absolute top-2 right-2 bg-red-600 p-2 rounded-full text-white text-xs px-3">✕</button>
             </div>
 
-            <input id="titulo" type="text" placeholder="¿Qué registramos?" class="w-full bg-slate-800 p-4 rounded-xl mb-4 border border-slate-700 text-white outline-none focus:border-cyan-500">
+            <input id="titulo" type="text" placeholder="¿Qué quieres guardar?" class="w-full bg-slate-800 p-4 rounded-xl mb-4 border border-slate-700 text-white outline-none focus:border-cyan-500">
             
             <div class="grid grid-cols-2 gap-3 mb-4">
                 <select id="tipo" class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-white">
@@ -57,15 +57,19 @@
             </div>
 
             <div class="flex gap-2">
-                <button onclick="abrirCamara()" class="bg-slate-800 border border-slate-700 px-6 rounded-xl text-xl">📷</button>
+                <button onclick="abrirCamara()" class="bg-slate-800 border border-slate-700 px-5 rounded-xl text-xl">📷</button>
                 <button id="btn-save" onclick="guardarDato()" class="flex-1 bg-white text-black font-black py-4 rounded-xl shadow-lg">GUARDAR</button>
                 <button id="btn-cancel" onclick="cancelarEdicion()" class="hidden bg-slate-700 text-white px-4 rounded-xl">✕</button>
             </div>
         </div>
 
-        <div id="camera-module" class="hidden mb-6 bg-black p-4 rounded-2xl">
+        <div id="camera-module" class="hidden mb-6 bg-black p-4 rounded-2xl border border-slate-800">
             <video id="video-preview" autoplay playsinline class="w-full mb-3"></video>
-            <button onclick="tomarFoto()" class="w-full bg-cyan-500 text-black font-bold py-3 rounded-xl">CAPTURAR</button>
+            <div class="flex gap-2">
+                <button onclick="cambiarCamara()" class="bg-slate-800 text-white px-4 rounded-xl">🔄 Giro</button>
+                <button onclick="tomarFoto()" class="flex-1 bg-cyan-500 text-black font-bold py-3 rounded-xl uppercase">Capturar</button>
+                <button onclick="cerrarCamara()" class="bg-red-900/50 text-red-500 px-4 rounded-xl text-xs font-bold uppercase">Cerrar</button>
+            </div>
         </div>
 
         <div id="contenedor-datos" class="space-y-4 pb-20"></div>
@@ -74,25 +78,26 @@
     <script>
         const SUPA_URL = 'https://wejqcxcgaebjvwltixyp.supabase.co';
         const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlanFjeGNnYWVianZ3bHRpeHlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MzE3ODgsImV4cCI6MjA4NTIwNzc4OH0.4ZN3nMt9353HuoR2qgtjBu6PrCdG6Mo58C_MHidA_58';
-        const supaCliente = supabase.createClient(SUPA_URL, SUPA_KEY);
+        const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
         
         let idEnEdicion = null;
         let usuarioActual = null;
+        let stream;
+        let modoCamara = "environment"; // Inicia con la de atrás
 
-        // --- SISTEMA DE ACCESO ---
         async function gestionarAcceso(modo) {
             const user = document.getElementById('auth-user').value.toLowerCase().trim();
             const pin = document.getElementById('auth-pin').value;
-            if(!user || pin.length < 4) return alert("Nombre y PIN de 4+ números requeridos");
-            const emailFalso = `${user}@mividaos.com`;
+            if(!user || pin.length < 4) return alert("Nombre y PIN requeridos");
+            const fakeEmail = `${user}@mividaos.com`;
 
             if (modo === 'signup') {
-                const { error } = await supaCliente.auth.signUp({ email: emailFalso, password: pin });
-                if (error) alert("Error: " + error.message);
-                else alert("¡Usuario '" + user + "' creado! Ahora dale a ENTRAR.");
+                const { error } = await supa.auth.signUp({ email: fakeEmail, password: pin });
+                if (error) alert(error.message);
+                else alert("Registrado como " + user + ". Ahora entra.");
             } else {
-                const { data, error } = await supaCliente.auth.signInWithPassword({ email: emailFalso, password: pin });
-                if (error) alert("Datos incorrectos");
+                const { data, error } = await supa.auth.signInWithPassword({ email: fakeEmail, password: pin });
+                if (error) alert("PIN o usuario incorrecto");
                 else {
                     usuarioActual = data.user;
                     document.getElementById('auth-screen').classList.add('hidden');
@@ -103,22 +108,50 @@
             }
         }
 
-        // --- CÁMARA ORIGINAL ---
-        let stream;
+        // FUNCIONES DE CÁMARA
         async function abrirCamara() {
             document.getElementById('camera-module').classList.remove('hidden');
-            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            document.getElementById('video-preview').srcObject = stream;
+            if (stream) stream.getTracks().forEach(t => t.stop());
+            
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: modoCamara } 
+                });
+                const video = document.getElementById('video-preview');
+                video.srcObject = stream;
+                
+                // Efecto espejo solo si es la frontal
+                if(modoCamara === "user") video.classList.add('mirror');
+                else video.classList.remove('mirror');
+            } catch (err) {
+                alert("Error al abrir cámara: " + err);
+            }
+        }
+
+        function cambiarCamara() {
+            modoCamara = (modoCamara === "user") ? "environment" : "user";
+            abrirCamara();
         }
 
         function tomarFoto() {
             const video = document.getElementById('video-preview');
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
+            const ctx = canvas.getContext('2d');
+            
+            if(modoCamara === "user") {
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+            }
+            
+            ctx.drawImage(video, 0, 0);
             document.getElementById('foto-final').src = canvas.toDataURL('image/jpeg', 0.6);
             document.getElementById('foto-preview-container').classList.remove('hidden');
-            stream.getTracks().forEach(t => t.stop());
+            cerrarCamara();
+        }
+
+        function cerrarCamara() {
+            if (stream) stream.getTracks().forEach(t => t.stop());
             document.getElementById('camera-module').classList.add('hidden');
         }
 
@@ -127,7 +160,7 @@
             document.getElementById('foto-final').src = ""; 
         }
 
-        // --- GESTIÓN DE DATOS ---
+        // GESTIÓN DE NOTAS (EDITAR/BORRAR)
         async function guardarDato() {
             const t = document.getElementById('titulo').value;
             const tp = document.getElementById('tipo').value;
@@ -137,15 +170,15 @@
 
             const payload = { 
                 titulo: t, tipo: tp, fecha_objetivo: f || null, 
-                contenido: (img && img.startsWith('data')) ? img : null,
-                user_id: usuarioActual.id // Guardamos con el ID del usuario
+                contenido: img.startsWith('data') ? img : null,
+                user_id: usuarioActual.id 
             };
 
             if (idEnEdicion) {
-                await supaCliente.from('bitacora').update(payload).eq('id', idEnEdicion);
+                await supa.from('bitacora').update(payload).eq('id', idEnEdicion);
                 cancelarEdicion();
             } else {
-                await supaCliente.from('bitacora').insert([payload]);
+                await supa.from('bitacora').insert([payload]);
             }
             
             document.getElementById('titulo').value = '';
@@ -155,7 +188,7 @@
         }
 
         async function cargarDatos() {
-            const { data } = await supaCliente.from('bitacora').select('*').order('created_at', { ascending: false });
+            const { data } = await supa.from('bitacora').select('*').order('created_at', { ascending: false });
             const cont = document.getElementById('contenedor-datos');
             cont.innerHTML = '';
             data?.forEach(item => {
@@ -182,7 +215,7 @@
             document.getElementById('titulo').value = titulo;
             document.getElementById('tipo').value = tipo;
             document.getElementById('fecha').value = (fecha && fecha !== "null") ? fecha : "";
-            if (contenido && contenido !== "null" && contenido !== "") {
+            if (contenido && contenido !== "null") {
                 document.getElementById('foto-final').src = contenido;
                 document.getElementById('foto-preview-container').classList.remove('hidden');
             }
@@ -204,8 +237,8 @@
         }
 
         async function eliminar(id) {
-            if(confirm("¿Eliminar para siempre?")) {
-                await supaCliente.from('bitacora').delete().eq('id', id);
+            if(confirm("¿Borrar definitivamente?")) {
+                await supa.from('bitacora').delete().eq('id', id);
                 cargarDatos();
             }
         }
