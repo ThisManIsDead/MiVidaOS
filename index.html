@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Vida OS - Privado</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none; }
+        #video-preview { transform: scaleX(-1); border-radius: 1rem; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen font-sans">
+
+    <div id="lock-screen" class="fixed inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center p-6">
+        <h1 class="text-3xl font-black text-white mb-2 tracking-tighter">SISTEMA BLOQUEADO</h1>
+        <p id="lock-msg" class="text-slate-500 mb-8 text-sm uppercase tracking-widest">Introduce tu llave de acceso</p>
+        <input id="pin-input" type="password" placeholder="****" class="bg-slate-900 border-2 border-slate-800 text-center text-4xl w-32 p-4 rounded-2xl focus:border-cyan-500 outline-none transition-all">
+        <button onclick="verificarAcceso()" class="mt-8 bg-white text-black font-bold px-10 py-4 rounded-full hover:bg-cyan-400 transition-colors">ENTRAR</button>
+    </div>
+
+    <div id="main-app" class="hidden max-w-xl mx-auto p-6">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-black text-white tracking-tighter">MI VIDA <span class="text-cyan-500">OS</span></h1>
+            <div id="connection-dot" class="h-3 w-3 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]"></div>
+        </header>
+
+        <div id="camera-module" class="bg-slate-900 border border-slate-800 p-4 rounded-2xl mb-6 hidden">
+            <video id="video-preview" autoplay playsinline class="w-full bg-black mb-3"></video>
+            <canvas id="canvas" class="hidden"></canvas>
+            <button onclick="tomarFoto()" class="w-full bg-white text-black font-bold py-3 rounded-xl">📸 CAPTURAR MOMENTO</button>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl mb-8 shadow-2xl">
+            <div id="foto-preview-container" class="hidden mb-4 relative">
+                <img id="foto-final" class="rounded-xl w-full border-2 border-cyan-500">
+                <button onclick="borrarFoto()" class="absolute top-2 right-2 bg-red-600 p-2 rounded-full text-white text-xs">✕ Borrar</button>
+            </div>
+
+            <input id="titulo" type="text" placeholder="¿Qué quieres guardar hoy?" class="w-full bg-slate-800 p-4 rounded-xl mb-4 border border-slate-700 focus:ring-2 focus:ring-cyan-500 outline-none text-white">
+            
+            <div class="flex gap-2 mb-4">
+                <button onclick="abrirCamara()" class="bg-slate-800 border border-slate-700 p-4 rounded-xl hover:bg-slate-700 transition">📷</button>
+                <select id="tipo" class="flex-1 bg-slate-800 p-3 rounded-xl border border-slate-700 text-white">
+                    <option value="nota">📝 Nota</option>
+                    <option value="avance">🚀 Avance</option>
+                    <option value="alarma">⏰ Alarma</option>
+                </select>
+            </div>
+            
+            <button onclick="guardarDato()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-4 rounded-xl transition-all">GUARDAR EN LA NUBE</button>
+        </div>
+
+        <div id="contenedor-datos" class="space-y-4"></div>
+    </div>
+
+    <script>
+        const URL_DB = 'https://wejqcxcgaebjvwltixyp.supabase.co';
+        const KEY_DB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlanFjeGNnYWVianZ3bHRpeHlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MzE3ODgsImV4cCI6MjA4NTIwNzc4OH0.4ZN3nMt9353HuoR2qgtjBu6PrCdG6Mo58C_MHidA_58';
+        const _supabase = supabase.createClient(URL_DB, KEY_DB);
+
+        // LÓGICA DE CONTRASEÑA
+        const pinGuardado = localStorage.getItem('user_pin');
+        if (!pinGuardado) {
+            document.getElementById('lock-msg').innerText = "Crea tu nueva contraseña de acceso";
+        }
+
+        function verificarAcceso() {
+            const input = document.getElementById('pin-input').value;
+            if (!pinGuardado) {
+                localStorage.setItem('user_pin', input);
+                alert("Contraseña creada con éxito");
+                entrar();
+            } else if (input === pinGuardado) {
+                entrar();
+            } else {
+                alert("Contraseña incorrecta");
+            }
+        }
+
+        function entrar() {
+            document.getElementById('lock-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            cargarDatos();
+        }
+
+        // LÓGICA DE CÁMARA
+        let stream;
+        async function abrirCamara() {
+            document.getElementById('camera-module').classList.remove('hidden');
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById('video-preview').srcObject = stream;
+        }
+
+        function tomarFoto() {
+            const video = document.getElementById('video-preview');
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            document.getElementById('foto-final').src = dataUrl;
+            document.getElementById('foto-preview-container').classList.remove('hidden');
+            
+            // Apagar cámara
+            stream.getTracks().forEach(track => track.stop());
+            document.getElementById('camera-module').classList.add('hidden');
+        }
+
+        function borrarFoto() {
+            document.getElementById('foto-preview-container').classList.add('hidden');
+            document.getElementById('foto-final').src = "";
+        }
+
+        // BASE DE DATOS
+        async function guardarDato() {
+            const titulo = document.getElementById('titulo').value;
+            const tipo = document.getElementById('tipo').value;
+            const imagen = document.getElementById('foto-final').src; // Esto es un Base64
+
+            if(!titulo) return alert("Escribe algo");
+
+            const { error } = await _supabase.from('bitacora').insert([{ 
+                titulo: titulo, 
+                tipo: tipo,
+                contenido: imagen // Guardamos la foto como texto largo temporalmente
+            }]);
+            
+            if (error) alert(error.message);
+            else {
+                document.getElementById('titulo').value = '';
+                borrarFoto();
+            }
+        }
+
+        async function cargarDatos() {
+            const { data } = await _supabase.from('bitacora').select('*').order('created_at', { ascending: false });
+            const contenedor = document.getElementById('contenedor-datos');
+            contenedor.innerHTML = '';
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-900 border border-slate-800 p-4 rounded-xl mb-4";
+                card.innerHTML = `
+                    <h3 class="text-white font-bold">${item.titulo}</h3>
+                    ${item.contenido && item.contenido.startsWith('data:image') ? `<img src="${item.contenido}" class="mt-2 rounded-lg w-full">` : ''}
+                `;
+                contenedor.appendChild(card);
+            });
+        }
+
+        _supabase.channel('cambios').on('postgres_changes', { event: '*', schema: 'public', table: 'bitacora' }, () => cargarDatos()).subscribe();
+    </script>
+</body>
+</html>
