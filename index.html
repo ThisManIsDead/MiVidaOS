@@ -3,155 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Vida OS - Privado</title>
+    <title>Mi Vida OS - Gestión Total</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .hidden { display: none; }
         #video-preview { transform: scaleX(-1); border-radius: 1rem; }
+        .is-alarm { border-left: 4px solid #f59e0b; }
+        .editing-mode { border: 2px solid #06b6d4 !important; background: #083344 !important; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-200 min-h-screen font-sans">
 
-    <div id="lock-screen" class="fixed inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center p-6">
-        <h1 class="text-3xl font-black text-white mb-2 tracking-tighter">SISTEMA BLOQUEADO</h1>
-        <p id="lock-msg" class="text-slate-500 mb-8 text-sm uppercase tracking-widest">Introduce tu llave de acceso</p>
-        <input id="pin-input" type="password" placeholder="****" class="bg-slate-900 border-2 border-slate-800 text-center text-4xl w-32 p-4 rounded-2xl focus:border-cyan-500 outline-none transition-all">
-        <button onclick="verificarAcceso()" class="mt-8 bg-white text-black font-bold px-10 py-4 rounded-full hover:bg-cyan-400 transition-colors">ENTRAR</button>
+    <div id="lock-screen" class="fixed inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center p-6 text-center">
+        <h1 class="text-3xl font-black text-white mb-2 tracking-tighter">SISTEMA PRIVADO</h1>
+        <input id="pin-input" type="password" inputmode="numeric" placeholder="****" class="bg-slate-900 border-2 border-slate-800 text-center text-4xl w-40 p-4 rounded-2xl focus:border-cyan-500 outline-none text-white">
+        <button onclick="verificarAcceso()" class="mt-8 bg-white text-black font-bold px-12 py-4 rounded-full w-full max-w-xs">ENTRAR</button>
     </div>
 
     <div id="main-app" class="hidden max-w-xl mx-auto p-6">
         <header class="flex justify-between items-center mb-8">
-            <h1 class="text-2xl font-black text-white tracking-tighter">MI VIDA <span class="text-cyan-500">OS</span></h1>
-            <div id="connection-dot" class="h-3 w-3 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]"></div>
+            <h1 class="text-2xl font-black text-white tracking-tighter uppercase">Mi Vida OS</h1>
+            <div id="connection-dot" class="h-3 w-3 rounded-full bg-green-500"></div>
         </header>
 
-        <div id="camera-module" class="bg-slate-900 border border-slate-800 p-4 rounded-2xl mb-6 hidden">
-            <video id="video-preview" autoplay playsinline class="w-full bg-black mb-3"></video>
-            <canvas id="canvas" class="hidden"></canvas>
-            <button onclick="tomarFoto()" class="w-full bg-white text-black font-bold py-3 rounded-xl">📸 CAPTURAR MOMENTO</button>
-        </div>
-
-        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl mb-8 shadow-2xl">
+        <div id="form-container" class="bg-slate-900 border border-slate-800 p-5 rounded-2xl mb-8 shadow-2xl transition-all">
+            <div id="edit-indicator" class="hidden text-cyan-400 text-[10px] font-bold mb-2 uppercase italic">Modo Edición Activado</div>
+            
             <div id="foto-preview-container" class="hidden mb-4 relative">
                 <img id="foto-final" class="rounded-xl w-full border-2 border-cyan-500">
-                <button onclick="borrarFoto()" class="absolute top-2 right-2 bg-red-600 p-2 rounded-full text-white text-xs">✕ Borrar</button>
+                <button onclick="borrarFoto()" class="absolute top-2 right-2 bg-red-600 p-2 rounded-full text-white text-xs px-3">✕ Quitar</button>
             </div>
 
-            <input id="titulo" type="text" placeholder="¿Qué quieres guardar hoy?" class="w-full bg-slate-800 p-4 rounded-xl mb-4 border border-slate-700 focus:ring-2 focus:ring-cyan-500 outline-none text-white">
+            <input id="titulo" type="text" placeholder="Título..." class="w-full bg-slate-800 p-4 rounded-xl mb-4 border border-slate-700 text-white">
             
-            <div class="flex gap-2 mb-4">
-                <button onclick="abrirCamara()" class="bg-slate-800 border border-slate-700 p-4 rounded-xl hover:bg-slate-700 transition">📷</button>
-                <select id="tipo" class="flex-1 bg-slate-800 p-3 rounded-xl border border-slate-700 text-white">
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <select id="tipo" class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-white">
                     <option value="nota">📝 Nota</option>
                     <option value="avance">🚀 Avance</option>
                     <option value="alarma">⏰ Alarma</option>
                 </select>
+                <input id="fecha" type="datetime-local" class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-white">
             </div>
-            
-            <button onclick="guardarDato()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-4 rounded-xl transition-all">GUARDAR EN LA NUBE</button>
+
+            <div class="flex gap-2">
+                <button onclick="abrirCamara()" class="bg-slate-800 border border-slate-700 px-6 rounded-xl text-xl">📷</button>
+                <button id="btn-save" onclick="guardarDato()" class="flex-1 bg-white text-black font-black py-4 rounded-xl shadow-lg">GUARDAR</button>
+                <button id="btn-cancel" onclick="cancelarEdicion()" class="hidden bg-slate-700 text-white px-4 rounded-xl">Cancelar</button>
+            </div>
         </div>
 
-        <div id="contenedor-datos" class="space-y-4"></div>
+        <div id="camera-module" class="hidden mb-6 bg-black p-4 rounded-2xl">
+            <video id="video-preview" autoplay playsinline class="w-full mb-3"></video>
+            <button onclick="tomarFoto()" class="w-full bg-cyan-500 text-black font-bold py-3 rounded-xl">CAPTURAR</button>
+        </div>
+
+        <div id="contenedor-datos" class="space-y-4 pb-20"></div>
     </div>
 
     <script>
         const URL_DB = 'https://wejqcxcgaebjvwltixyp.supabase.co';
         const KEY_DB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlanFjeGNnYWVianZ3bHRpeHlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MzE3ODgsImV4cCI6MjA4NTIwNzc4OH0.4ZN3nMt9353HuoR2qgtjBu6PrCdG6Mo58C_MHidA_58';
         const _supabase = supabase.createClient(URL_DB, KEY_DB);
+        
+        let idEnEdicion = null;
 
-        // LÓGICA DE CONTRASEÑA
-        const pinGuardado = localStorage.getItem('user_pin');
-        if (!pinGuardado) {
-            document.getElementById('lock-msg').innerText = "Crea tu nueva contraseña de acceso";
-        }
-
+        // --- SEGURIDAD ---
         function verificarAcceso() {
             const input = document.getElementById('pin-input').value;
-            if (!pinGuardado) {
-                localStorage.setItem('user_pin', input);
-                alert("Contraseña creada con éxito");
-                entrar();
-            } else if (input === pinGuardado) {
-                entrar();
-            } else {
-                alert("Contraseña incorrecta");
-            }
+            const pin = localStorage.getItem('user_pin');
+            if (!pin) { localStorage.setItem('user_pin', input); entrar(); }
+            else if (input === pin) { entrar(); }
+            else { alert("PIN Incorrecto"); }
         }
-
         function entrar() {
             document.getElementById('lock-screen').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             cargarDatos();
         }
 
-        // LÓGICA DE CÁMARA
+        // --- CÁMARA ---
         let stream;
         async function abrirCamara() {
             document.getElementById('camera-module').classList.remove('hidden');
-            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
             document.getElementById('video-preview').srcObject = stream;
         }
-
         function tomarFoto() {
             const video = document.getElementById('video-preview');
-            const canvas = document.getElementById('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            
-            const dataUrl = canvas.toDataURL('image/jpeg');
-            document.getElementById('foto-final').src = dataUrl;
+            document.getElementById('foto-final').src = canvas.toDataURL('image/jpeg', 0.6);
             document.getElementById('foto-preview-container').classList.remove('hidden');
-            
-            // Apagar cámara
-            stream.getTracks().forEach(track => track.stop());
+            stream.getTracks().forEach(t => t.stop());
             document.getElementById('camera-module').classList.add('hidden');
         }
+        function borrarFoto() { document.getElementById('foto-preview-container').classList.add('hidden'); document.getElementById('foto-final').src = ""; }
 
-        function borrarFoto() {
-            document.getElementById('foto-preview-container').classList.add('hidden');
-            document.getElementById('foto-final').src = "";
-        }
-
-        // BASE DE DATOS
+        // --- LÓGICA DE DATOS (INSERTAR / ACTUALIZAR) ---
         async function guardarDato() {
-            const titulo = document.getElementById('titulo').value;
-            const tipo = document.getElementById('tipo').value;
-            const imagen = document.getElementById('foto-final').src; // Esto es un Base64
+            const t = document.getElementById('titulo').value;
+            const tp = document.getElementById('tipo').value;
+            const f = document.getElementById('fecha').value;
+            const img = document.getElementById('foto-final').src;
 
-            if(!titulo) return alert("Escribe algo");
+            if(!t) return;
 
-            const { error } = await _supabase.from('bitacora').insert([{ 
-                titulo: titulo, 
-                tipo: tipo,
-                contenido: imagen // Guardamos la foto como texto largo temporalmente
-            }]);
-            
-            if (error) alert(error.message);
-            else {
-                document.getElementById('titulo').value = '';
-                borrarFoto();
+            const payload = { titulo: t, tipo: tp, fecha_objetivo: f || null, contenido: img || null };
+
+            if (idEnEdicion) {
+                // ACTUALIZAR
+                await _supabase.from('bitacora').update(payload).eq('id', idEnEdicion);
+                cancelarEdicion();
+            } else {
+                // INSERTAR NUEVO
+                await _supabase.from('bitacora').insert([payload]);
             }
+            
+            document.getElementById('titulo').value = '';
+            document.getElementById('fecha').value = '';
+            borrarFoto();
         }
 
         async function cargarDatos() {
             const { data } = await _supabase.from('bitacora').select('*').order('created_at', { ascending: false });
-            const contenedor = document.getElementById('contenedor-datos');
-            contenedor.innerHTML = '';
+            const cont = document.getElementById('contenedor-datos');
+            cont.innerHTML = '';
 
             data.forEach(item => {
                 const card = document.createElement('div');
-                card.className = "bg-slate-900 border border-slate-800 p-4 rounded-xl mb-4";
+                card.className = `bg-slate-900 border border-slate-800 p-5 rounded-2xl ${item.tipo === 'alarma' ? 'is-alarm' : ''}`;
                 card.innerHTML = `
+                    <div class="flex justify-between mb-2">
+                        <span class="text-[9px] font-bold uppercase bg-slate-800 px-2 py-1 rounded text-slate-400">${item.tipo}</span>
+                        <div class="flex gap-3">
+                            <button onclick="prepararEdicion('${item.id}', '${item.titulo}', '${item.tipo}', '${item.fecha_objetivo}', '${item.contenido || ""}')" class="text-cyan-500 text-xs">Editar</button>
+                            <button onclick="eliminar('${item.id}')" class="text-red-500 text-xs">Borrar</button>
+                        </div>
+                    </div>
                     <h3 class="text-white font-bold">${item.titulo}</h3>
-                    ${item.contenido && item.contenido.startsWith('data:image') ? `<img src="${item.contenido}" class="mt-2 rounded-lg w-full">` : ''}
+                    ${item.fecha_objetivo ? `<p class="text-xs text-amber-500 mt-1">⏰ ${new Date(item.fecha_objetivo).toLocaleString()}</p>` : ''}
+                    ${item.contenido ? `<img src="${item.contenido}" class="mt-3 rounded-lg w-full">` : ''}
                 `;
-                contenedor.appendChild(card);
+                cont.appendChild(card);
             });
         }
 
-        _supabase.channel('cambios').on('postgres_changes', { event: '*', schema: 'public', table: 'bitacora' }, () => cargarDatos()).subscribe();
+        // --- FUNCIONES DE EDICIÓN Y BORRADO ---
+        function prepararEdicion(id, titulo, tipo, fecha, contenido) {
+            idEnEdicion = id;
+            document.getElementById('titulo').value = titulo;
+            document.getElementById('tipo').value = tipo;
+            document.getElementById('fecha').value = fecha !== "null" ? fecha : "";
+            if (contenido && contenido !== "null") {
+                document.getElementById('foto-final').src = contenido;
+                document.getElementById('foto-preview-container').classList.remove('hidden');
+            }
+            
+            document.getElementById('form-container').classList.add('editing-mode');
+            document.getElementById('edit-indicator').classList.remove('hidden');
+            document.getElementById('btn-save').innerText = "ACTUALIZAR CAMBIOS";
+            document.getElementById('btn-cancel').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelarEdicion() {
+            idEnEdicion = null;
+            document.getElementById('titulo').value = '';
+            document.getElementById('form-container').classList.remove('editing-mode');
+            document.getElementById('edit-indicator').classList.add('hidden');
+            document.getElementById('btn-save').innerText = "GUARDAR";
+            document.getElementById('btn-cancel').classList.add('hidden');
+            borrarFoto();
+        }
+
+        async function eliminar(id) {
+            if(confirm("¿Estás seguro de borrar esto?")) {
+                await _supabase.from('bitacora').delete().eq('id', id);
+            }
+        }
+
+        _supabase.channel('viva').on('postgres_changes', { event: '*', schema: 'public', table: 'bitacora' }, () => cargarDatos()).subscribe();
+        
+        // De acuerdo, lo recordaré. Siempre puedes pedirme que olvide cosas o gestionar la información que haya guardado en tus ajustes (https://gemini.google.com/saved-info).
     </script>
 </body>
 </html>
