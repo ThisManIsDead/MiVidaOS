@@ -3,87 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Vida OS</title>
+    <title>Mi Vida OS - Privado</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style> .hidden { display: none; } .is-alarm { border-left: 4px solid #f59e0b; } </style>
+    <style>
+        .hidden { display: none; }
+        #video-preview { transform: scaleX(-1); border-radius: 1rem; }
+        .is-alarm { border-left: 4px solid #f59e0b; }
+        .editing-mode { border: 2px solid #06b6d4 !important; background: #083344 !important; }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-200 min-h-screen">
+<body class="bg-slate-950 text-slate-200 min-h-screen font-sans">
 
     <div id="auth-screen" class="fixed inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center p-6 text-center">
-        <h1 class="text-4xl font-black text-white mb-8 italic">MI VIDA OS</h1>
+        <h1 class="text-4xl font-black text-white mb-8 italic tracking-tighter">MI VIDA OS</h1>
         <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 w-full max-w-sm shadow-2xl">
-            <input id="auth-user" type="text" placeholder="Usuario" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none focus:border-cyan-500 border border-transparent">
-            <input id="auth-pin" type="password" inputmode="numeric" placeholder="PIN" class="w-full bg-slate-800 p-4 rounded-xl mb-6 text-white text-center text-2xl outline-none focus:border-cyan-500 border border-transparent">
-            <button onclick="controlAcceso('login')" class="w-full bg-white text-black font-black py-4 rounded-xl mb-4 hover:bg-cyan-400 transition">ENTRAR</button>
-            <button onclick="controlAcceso('signup')" class="text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white">Registrar nuevo nombre</button>
+            <input id="auth-user" type="text" placeholder="Tu Nombre" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none focus:border-cyan-500 border border-transparent">
+            <input id="auth-pin" type="password" inputmode="numeric" placeholder="Tu PIN" class="w-full bg-slate-800 p-4 rounded-xl mb-6 text-white text-center text-2xl outline-none focus:border-cyan-500 border border-transparent">
+            
+            <div class="flex flex-col gap-3">
+                <button onclick="gestionarAcceso('login')" class="w-full bg-white text-black font-black py-4 rounded-xl hover:bg-cyan-400 transition">ENTRAR</button>
+                <button onclick="gestionarAcceso('signup')" class="text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white">Registrar nuevo usuario</button>
+            </div>
         </div>
     </div>
 
     <div id="main-app" class="hidden max-w-xl mx-auto p-6">
         <header class="flex justify-between items-center mb-8">
-            <h2 id="display-user" class="text-xl font-black text-cyan-500 uppercase italic"></h2>
+            <div>
+                <h1 id="user-display" class="text-2xl font-black text-white tracking-tighter uppercase italic"></h1>
+                <p class="text-[9px] text-cyan-500 font-bold">NUBE PRIVADA ACTIVA</p>
+            </div>
             <button onclick="location.reload()" class="text-[10px] text-red-500 font-bold border border-red-900/50 px-3 py-1 rounded-full">SALIR</button>
         </header>
 
-        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl mb-8 shadow-xl">
-            <input id="nota-titulo" type="text" placeholder="Escribe algo..." class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none focus:border-cyan-500 border border-transparent">
+        <div id="form-container" class="bg-slate-900 border border-slate-800 p-5 rounded-2xl mb-8 shadow-2xl transition-all">
+            <div id="edit-indicator" class="hidden text-cyan-400 text-[10px] font-bold mb-2 uppercase italic">Modo Edición Activado</div>
+            
+            <div id="foto-preview-container" class="hidden mb-4 relative">
+                <img id="foto-final" class="rounded-xl w-full border-2 border-cyan-500">
+                <button onclick="borrarFoto()" class="absolute top-2 right-2 bg-red-600 p-2 rounded-full text-white text-xs px-3">✕ Quitar</button>
+            </div>
+
+            <input id="titulo" type="text" placeholder="¿Qué registramos?" class="w-full bg-slate-800 p-4 rounded-xl mb-4 border border-slate-700 text-white outline-none focus:border-cyan-500">
+            
             <div class="grid grid-cols-2 gap-3 mb-4">
-                <select id="nota-tipo" class="bg-slate-800 p-3 rounded-xl text-white text-sm outline-none">
+                <select id="tipo" class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-white">
                     <option value="nota">📝 Nota</option>
                     <option value="avance">🚀 Avance</option>
                     <option value="alarma">⏰ Alarma</option>
                 </select>
-                <input id="nota-fecha" type="datetime-local" class="bg-slate-800 p-3 rounded-xl text-white text-sm outline-none">
+                <input id="fecha" type="datetime-local" class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-white">
             </div>
-            <button onclick="enviarDato()" class="w-full bg-cyan-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-cyan-500 transition">GUARDAR REGISTRO</button>
+
+            <div class="flex gap-2">
+                <button onclick="abrirCamara()" class="bg-slate-800 border border-slate-700 px-6 rounded-xl text-xl">📷</button>
+                <button id="btn-save" onclick="guardarDato()" class="flex-1 bg-white text-black font-black py-4 rounded-xl shadow-lg">GUARDAR</button>
+                <button id="btn-cancel" onclick="cancelarEdicion()" class="hidden bg-slate-700 text-white px-4 rounded-xl">✕</button>
+            </div>
         </div>
-        <div id="lista-datos" class="space-y-4 pb-20"></div>
+
+        <div id="camera-module" class="hidden mb-6 bg-black p-4 rounded-2xl">
+            <video id="video-preview" autoplay playsinline class="w-full mb-3"></video>
+            <button onclick="tomarFoto()" class="w-full bg-cyan-500 text-black font-bold py-3 rounded-xl">CAPTURAR</button>
+        </div>
+
+        <div id="contenedor-datos" class="space-y-4 pb-20"></div>
     </div>
 
     <script>
         const SUPA_URL = 'https://wejqcxcgaebjvwltixyp.supabase.co';
         const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlanFjeGNnYWVianZ3bHRpeHlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2MzE3ODgsImV4cCI6MjA4NTIwNzc4OH0.4ZN3nMt9353HuoR2qgtjBu6PrCdG6Mo58C_MHidA_58';
-        const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+        const supaCliente = supabase.createClient(SUPA_URL, SUPA_KEY);
         
-        let sesionUsuario = null;
+        let idEnEdicion = null;
+        let usuarioActual = null;
 
-        async function controlAcceso(modo) {
-            const u = document.getElementById('auth-user').value.toLowerCase().trim();
-            const p = document.getElementById('auth-pin').value;
-            if(!u || p.length < 4) return alert("Pon un nombre y PIN de 4 cifras");
-            const mail = `${u}@mividaos.com`;
+        // --- SISTEMA DE ACCESO ---
+        async function gestionarAcceso(modo) {
+            const user = document.getElementById('auth-user').value.toLowerCase().trim();
+            const pin = document.getElementById('auth-pin').value;
+            if(!user || pin.length < 4) return alert("Nombre y PIN de 4+ números requeridos");
+            const emailFalso = `${user}@mividaos.com`;
 
             if (modo === 'signup') {
-                const { error } = await supa.auth.signUp({ email: mail, password: p });
+                const { error } = await supaCliente.auth.signUp({ email: emailFalso, password: pin });
                 if (error) alert("Error: " + error.message);
-                else alert("¡Usuario " + u + " registrado! Ahora dale a ENTRAR.");
+                else alert("¡Usuario '" + user + "' creado! Ahora dale a ENTRAR.");
             } else {
-                const { data, error } = await supa.auth.signInWithPassword({ email: mail, password: p });
-                if (error) alert("Nombre o PIN incorrectos");
+                const { data, error } = await supaCliente.auth.signInWithPassword({ email: emailFalso, password: pin });
+                if (error) alert("Datos incorrectos");
                 else {
-                    sesionUsuario = data.user;
+                    usuarioActual = data.user;
                     document.getElementById('auth-screen').classList.add('hidden');
                     document.getElementById('main-app').classList.remove('hidden');
-                    document.getElementById('display-user').innerText = u;
-                    obtenerDatos();
+                    document.getElementById('user-display').innerText = user;
+                    cargarDatos();
                 }
             }
         }
 
-        async function enviarDato() {
-            const t = document.getElementById('nota-titulo').value;
-            const tp = document.getElementById('nota-tipo').value;
-            const f = document.getElementById('nota-fecha').value;
-            if(!t) return;
-            await supa.from('bitacora').insert([{ titulo: t, tipo: tp, fecha_objetivo: f || null, user_id: sesionUsuario.id }]);
-            document.getElementById('nota-titulo').value = '';
-            obtenerDatos();
+        // --- CÁMARA ORIGINAL ---
+        let stream;
+        async function abrirCamara() {
+            document.getElementById('camera-module').classList.remove('hidden');
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            document.getElementById('video-preview').srcObject = stream;
         }
 
-        async function obtenerDatos() {
-            const { data } = await supa.from('bitacora').select('*').order('created_at', { ascending: false });
-            const cont = document.getElementById('lista-datos');
+        function tomarFoto() {
+            const video = document.getElementById('video-preview');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            document.getElementById('foto-final').src = canvas.toDataURL('image/jpeg', 0.6);
+            document.getElementById('foto-preview-container').classList.remove('hidden');
+            stream.getTracks().forEach(t => t.stop());
+            document.getElementById('camera-module').classList.add('hidden');
+        }
+
+        function borrarFoto() { 
+            document.getElementById('foto-preview-container').classList.add('hidden'); 
+            document.getElementById('foto-final').src = ""; 
+        }
+
+        // --- GESTIÓN DE DATOS ---
+        async function guardarDato() {
+            const t = document.getElementById('titulo').value;
+            const tp = document.getElementById('tipo').value;
+            const f = document.getElementById('fecha').value;
+            const img = document.getElementById('foto-final').src;
+            if(!t) return;
+
+            const payload = { 
+                titulo: t, tipo: tp, fecha_objetivo: f || null, 
+                contenido: (img && img.startsWith('data')) ? img : null,
+                user_id: usuarioActual.id // Guardamos con el ID del usuario
+            };
+
+            if (idEnEdicion) {
+                await supaCliente.from('bitacora').update(payload).eq('id', idEnEdicion);
+                cancelarEdicion();
+            } else {
+                await supaCliente.from('bitacora').insert([payload]);
+            }
+            
+            document.getElementById('titulo').value = '';
+            document.getElementById('fecha').value = '';
+            borrarFoto();
+            cargarDatos();
+        }
+
+        async function cargarDatos() {
+            const { data } = await supaCliente.from('bitacora').select('*').order('created_at', { ascending: false });
+            const cont = document.getElementById('contenedor-datos');
             cont.innerHTML = '';
             data?.forEach(item => {
                 const card = document.createElement('div');
@@ -91,19 +164,49 @@
                 card.innerHTML = `
                     <div class="flex justify-between mb-2">
                         <span class="text-[9px] font-bold uppercase bg-slate-800 px-2 py-1 rounded text-slate-400">${item.tipo}</span>
-                        <button onclick="borrarRegistro('${item.id}')" class="text-red-500 text-xs font-bold">BORRAR</button>
+                        <div class="flex gap-4">
+                            <button onclick="prepararEdicion('${item.id}', '${item.titulo}', '${item.tipo}', '${item.fecha_objetivo}', '${item.contenido || ""}')" class="text-cyan-500 text-[10px] font-bold">EDITAR</button>
+                            <button onclick="eliminar('${item.id}')" class="text-red-500 text-[10px] font-bold">BORRAR</button>
+                        </div>
                     </div>
-                    <h3 class="text-white font-bold">${item.titulo}</h3>
+                    <h3 class="text-white font-bold leading-tight">${item.titulo}</h3>
                     ${item.fecha_objetivo ? `<p class="text-xs text-amber-500 mt-1">⏰ ${new Date(item.fecha_objetivo).toLocaleString()}</p>` : ''}
+                    ${item.contenido ? `<img src="${item.contenido}" class="mt-3 rounded-lg w-full">` : ''}
                 `;
                 cont.appendChild(card);
             });
         }
 
-        async function borrarRegistro(id) {
-            if(confirm("¿Seguro?")) {
-                await supa.from('bitacora').delete().eq('id', id);
-                obtenerDatos();
+        function prepararEdicion(id, titulo, tipo, fecha, contenido) {
+            idEnEdicion = id;
+            document.getElementById('titulo').value = titulo;
+            document.getElementById('tipo').value = tipo;
+            document.getElementById('fecha').value = (fecha && fecha !== "null") ? fecha : "";
+            if (contenido && contenido !== "null" && contenido !== "") {
+                document.getElementById('foto-final').src = contenido;
+                document.getElementById('foto-preview-container').classList.remove('hidden');
+            }
+            document.getElementById('form-container').classList.add('editing-mode');
+            document.getElementById('edit-indicator').classList.remove('hidden');
+            document.getElementById('btn-save').innerText = "ACTUALIZAR";
+            document.getElementById('btn-cancel').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelarEdicion() {
+            idEnEdicion = null;
+            document.getElementById('form-container').classList.remove('editing-mode');
+            document.getElementById('edit-indicator').classList.add('hidden');
+            document.getElementById('btn-save').innerText = "GUARDAR";
+            document.getElementById('btn-cancel').classList.add('hidden');
+            document.getElementById('titulo').value = '';
+            borrarFoto();
+        }
+
+        async function eliminar(id) {
+            if(confirm("¿Eliminar para siempre?")) {
+                await supaCliente.from('bitacora').delete().eq('id', id);
+                cargarDatos();
             }
         }
     </script>
