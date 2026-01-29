@@ -3,77 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Vida OS - Cámara Pro</title>
+    <title>Mi Vida OS - Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .hidden { display: none; }
         .is-alarm { border-left: 4px solid #f59e0b; }
         .editing-mode { border: 2px solid #06b6d4 !important; background: #083344 !important; }
-        video { border-radius: 1.5rem; background: #000; width: 100%; object-fit: cover; max-height: 400px; }
+        video { border-radius: 1.5rem; background: #000; width: 100%; object-fit: cover; max-height: 300px; }
         .mirror { transform: scaleX(-1); }
+        .nav-active { color: #22d3ee; border-top: 2px solid #22d3ee; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-200 min-h-screen font-sans">
+<body class="bg-slate-950 text-slate-200 min-h-screen pb-24">
 
     <div id="auth-screen" class="fixed inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center p-6 text-center">
         <h1 class="text-4xl font-black text-white mb-8 italic tracking-tighter">MI VIDA OS</h1>
         <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 w-full max-w-sm shadow-2xl">
             <input id="auth-user" type="text" placeholder="Usuario" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none focus:border-cyan-500 border border-transparent">
             <input id="auth-pin" type="password" inputmode="numeric" placeholder="PIN" class="w-full bg-slate-800 p-4 rounded-xl mb-6 text-white text-center text-2xl outline-none focus:border-cyan-500 border border-transparent">
-            <div class="flex flex-col gap-3">
-                <button onclick="gestionarAcceso('login')" class="w-full bg-white text-black font-black py-4 rounded-xl hover:bg-cyan-400">ENTRAR</button>
-                <button onclick="gestionarAcceso('signup')" class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Crear cuenta</button>
-            </div>
+            <button onclick="gestionarAcceso('login')" class="w-full bg-white text-black font-black py-4 rounded-xl mb-3">ENTRAR</button>
+            <button onclick="gestionarAcceso('signup')" class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Crear cuenta</button>
         </div>
     </div>
 
-    <div id="main-app" class="hidden max-w-xl mx-auto p-6">
-        <header class="flex justify-between items-center mb-8">
-            <div>
-                <h1 id="user-display" class="text-2xl font-black text-white tracking-tighter uppercase italic"></h1>
-                <p class="text-[9px] text-cyan-500 font-bold tracking-widest">MULTICÁMARA ACTIVADA</p>
-            </div>
-            <button onclick="location.reload()" class="text-[10px] text-red-500 font-bold border border-red-900/50 px-3 py-1 rounded-full uppercase">Cerrar Sesión</button>
-        </header>
+    <header id="app-header" class="hidden max-w-xl mx-auto p-6 flex justify-between items-center">
+        <div>
+            <h1 id="user-display" class="text-xl font-black text-white uppercase italic"></h1>
+            <p id="section-title" class="text-[10px] text-cyan-500 font-bold tracking-widest uppercase">Bitácora</p>
+        </div>
+        <button onclick="location.reload()" class="text-[10px] text-red-500 font-bold border border-red-900/50 px-3 py-1 rounded-full uppercase">Salir</button>
+    </header>
 
-        <div id="form-container" class="bg-slate-900 border border-slate-800 p-5 rounded-2xl mb-8 shadow-2xl transition-all">
-            <div id="edit-indicator" class="hidden text-cyan-400 text-[10px] font-bold mb-2 uppercase italic">Modo Edición Activado</div>
-            
+    <main id="sec-bitacora" class="hidden max-w-xl mx-auto px-6">
+        <div id="form-container" class="bg-slate-900 border border-slate-800 p-5 rounded-2xl mb-8 shadow-2xl">
+            <div id="edit-indicator" class="hidden text-cyan-400 text-[10px] font-bold mb-2 uppercase">Modo Edición</div>
             <div id="foto-preview-container" class="hidden mb-4 relative">
-                <img id="foto-final" class="rounded-xl w-full border-2 border-cyan-500 shadow-lg">
-                <button onclick="borrarFoto()" class="absolute top-2 right-2 bg-red-600 p-2 rounded-full text-white text-xs px-3 font-bold">✕</button>
+                <img id="foto-final" class="rounded-xl w-full border-2 border-cyan-500">
+                <button onclick="borrarFoto()" class="absolute top-2 right-2 bg-red-600 p-2 rounded-full text-white">✕</button>
             </div>
-
-            <input id="titulo" type="text" placeholder="¿Qué registramos hoy?" class="w-full bg-slate-800 p-4 rounded-xl mb-4 border border-slate-700 text-white outline-none focus:border-cyan-500">
-            
+            <input id="titulo" type="text" placeholder="¿Qué registramos?" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none border border-transparent focus:border-cyan-500">
             <div class="grid grid-cols-2 gap-3 mb-4">
-                <select id="tipo" class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-white font-bold">
+                <select id="tipo" class="bg-slate-800 p-3 rounded-xl text-white">
                     <option value="nota">📝 Nota</option>
                     <option value="avance">🚀 Avance</option>
                     <option value="alarma">⏰ Alarma</option>
                 </select>
-                <input id="fecha" type="datetime-local" class="bg-slate-800 p-3 rounded-xl border border-slate-700 text-white text-sm">
+                <input id="fecha" type="datetime-local" class="bg-slate-800 p-3 rounded-xl text-white">
             </div>
-
             <div class="flex gap-2">
-                <button onclick="abrirCamara()" class="bg-slate-800 border border-slate-700 px-6 rounded-xl text-2xl active:scale-95 transition">📷</button>
-                <button id="btn-save" onclick="guardarDato()" class="flex-1 bg-white text-black font-black py-4 rounded-xl shadow-lg active:scale-95 transition">GUARDAR</button>
-                <button id="btn-cancel" onclick="cancelarEdicion()" class="hidden bg-slate-700 text-white px-4 rounded-xl">✕</button>
+                <button onclick="abrirCamara()" class="bg-slate-800 px-6 rounded-xl text-xl border border-slate-700">📷</button>
+                <button id="btn-save" onclick="guardarDato()" class="flex-1 bg-white text-black font-black py-4 rounded-xl shadow-lg">GUARDAR</button>
+                <button id="btn-cancel" onclick="cancelarEdicion()" class="hidden bg-slate-700 text-white px-4 rounded-xl font-bold italic">✕</button>
             </div>
         </div>
-
         <div id="camera-module" class="hidden mb-6 bg-slate-900 p-4 rounded-3xl border border-slate-700 shadow-2xl">
             <video id="video-preview" autoplay playsinline class="mb-4"></video>
-            <div class="flex gap-3">
-                <button onclick="cambiarCamara()" class="bg-slate-800 text-white px-6 rounded-2xl font-bold border border-slate-700 active:bg-slate-700">🔄 GIRO</button>
-                <button onclick="tomarFoto()" class="flex-1 bg-cyan-500 text-black font-black py-4 rounded-2xl uppercase tracking-tighter active:bg-cyan-400">CAPTURAR</button>
-                <button onclick="cerrarCamara()" class="bg-red-900/30 text-red-500 px-4 rounded-2xl font-bold border border-red-900/50">✕</button>
+            <div class="flex gap-2">
+                <button onclick="cambiarCamara()" class="bg-slate-800 text-white px-4 rounded-2xl font-bold">🔄</button>
+                <button onclick="tomarFoto()" class="flex-1 bg-cyan-500 text-black font-black py-3 rounded-2xl uppercase">Capturar</button>
+                <button onclick="cerrarCamara()" class="bg-red-900/30 text-red-500 px-4 rounded-2xl font-bold uppercase text-[10px]">Cerrar</button>
+            </div>
+        </div>
+        <div id="contenedor-datos" class="space-y-4"></div>
+    </main>
+
+    <main id="sec-finanzas" class="hidden max-w-xl mx-auto px-6">
+        <div class="bg-cyan-600 p-6 rounded-3xl mb-6 shadow-xl text-black">
+            <p class="text-xs font-bold uppercase opacity-70">Dinero Disponible</p>
+            <div class="flex items-center justify-between">
+                <h2 id="saldo-total" class="text-4xl font-black tracking-tighter">$ 0.00</h2>
+                <button onclick="editarSaldo()" class="bg-black/20 p-2 rounded-lg font-bold text-xs uppercase">Ajustar</button>
             </div>
         </div>
 
-        <div id="contenedor-datos" class="space-y-4 pb-20"></div>
-    </div>
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 mb-6">
+            <h3 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">Nuevo Gasto</h3>
+            <div class="flex gap-2">
+                <input id="gasto-desc" type="text" placeholder="¿En qué?" class="flex-1 bg-slate-800 p-3 rounded-xl text-white outline-none">
+                <input id="gasto-monto" type="number" placeholder="$" class="w-24 bg-slate-800 p-3 rounded-xl text-white text-center font-bold">
+                <button onclick="agregarGasto()" class="bg-white text-black px-4 rounded-xl font-black text-xl">+</button>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-800 text-[10px] uppercase text-slate-400">
+                    <tr>
+                        <th class="p-4">Descripción</th>
+                        <th class="p-4 text-right">Monto</th>
+                        <th class="p-4 w-10"></th>
+                    </tr>
+                </thead>
+                <tbody id="lista-gastos"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <nav id="navbar" class="hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex justify-around p-3 z-40 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+        <button onclick="cambiarSeccion('bitacora')" id="nav-bitacora" class="flex flex-col items-center gap-1 nav-active transition-all">
+            <span class="text-xl">📝</span><span class="text-[10px] font-bold uppercase">Bitácora</span>
+        </button>
+        <button onclick="cambiarSeccion('finanzas')" id="nav-finanzas" class="flex flex-col items-center gap-1 text-slate-500 transition-all">
+            <span class="text-xl">💰</span><span class="text-[10px] font-bold uppercase">Finanzas</span>
+        </button>
+    </nav>
 
     <script>
         const SUPA_URL = 'https://wejqcxcgaebjvwltixyp.supabase.co';
@@ -83,168 +117,163 @@
         let idEnEdicion = null;
         let usuarioActual = null;
         let streamActual;
-        let modoCamara = "environment"; 
+        let modoCamara = "environment";
 
         async function gestionarAcceso(modo) {
             const u = document.getElementById('auth-user').value.toLowerCase().trim();
             const p = document.getElementById('auth-pin').value;
-            if(!u || p.length < 4) return alert("Completa Nombre y PIN");
+            if(!u || p.length < 4) return alert("Nombre y PIN requeridos");
             const mail = `${u}@mividaos.com`;
 
             if (modo === 'signup') {
                 const { error } = await supa.auth.signUp({ email: mail, password: p });
                 if (error) alert(error.message);
-                else alert("Usuario '" + u + "' listo. Pulsa ENTRAR.");
+                else alert("Registrado como " + u + ". Entra ahora.");
             } else {
                 const { data, error } = await supa.auth.signInWithPassword({ email: mail, password: p });
                 if (error) alert("Error de acceso");
                 else {
                     usuarioActual = data.user;
                     document.getElementById('auth-screen').classList.add('hidden');
-                    document.getElementById('main-app').classList.remove('hidden');
+                    ['app-header', 'sec-bitacora', 'navbar'].forEach(id => document.getElementById(id).classList.remove('hidden'));
                     document.getElementById('user-display').innerText = u;
                     cargarDatos();
+                    cargarFinanzas();
                 }
             }
         }
 
-        // CÁMARA
+        function cambiarSeccion(sec) {
+            document.getElementById('sec-bitacora').classList.toggle('hidden', sec !== 'bitacora');
+            document.getElementById('sec-finanzas').classList.toggle('hidden', sec !== 'finanzas');
+            document.getElementById('nav-bitacora').classList.toggle('nav-active', sec === 'bitacora');
+            document.getElementById('nav-bitacora').classList.toggle('text-slate-500', sec !== 'bitacora');
+            document.getElementById('nav-finanzas').classList.toggle('nav-active', sec === 'finanzas');
+            document.getElementById('nav-finanzas').classList.toggle('text-slate-500', sec !== 'finanzas');
+            document.getElementById('section-title').innerText = sec === 'bitacora' ? 'Bitácora' : 'Finanzas';
+        }
+
+        // --- CÁMARA (ORIGINAL) ---
         async function abrirCamara() {
             document.getElementById('camera-module').classList.remove('hidden');
             if (streamActual) streamActual.getTracks().forEach(t => t.stop());
-            
-            const constraints = { 
-                video: { facingMode: { exact: modoCamara } } 
-            };
-
-            // Intento con modo exacto, si falla (como en PC), usa el modo simple
-            try {
-                streamActual = await navigator.mediaDevices.getUserMedia(constraints);
-            } catch (e) {
-                streamActual = await navigator.mediaDevices.getUserMedia({ video: { facingMode: modoCamara } });
-            }
-
+            streamActual = await navigator.mediaDevices.getUserMedia({ video: { facingMode: modoCamara } });
             const video = document.getElementById('video-preview');
             video.srcObject = streamActual;
-            
-            if(modoCamara === "user") video.classList.add('mirror');
-            else video.classList.remove('mirror');
+            video.classList.toggle('mirror', modoCamara === "user");
         }
-
-        function cambiarCamara() {
-            modoCamara = (modoCamara === "user") ? "environment" : "user";
-            abrirCamara();
-        }
-
+        function cambiarCamara() { modoCamara = (modoCamara === "user") ? "environment" : "user"; abrirCamara(); }
         function tomarFoto() {
             const video = document.getElementById('video-preview');
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
-            
-            if(modoCamara === "user") {
-                ctx.translate(canvas.width, 0);
-                ctx.scale(-1, 1);
-            }
-            
+            if(modoCamara === "user") { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
             ctx.drawImage(video, 0, 0);
             document.getElementById('foto-final').src = canvas.toDataURL('image/jpeg', 0.6);
             document.getElementById('foto-preview-container').classList.remove('hidden');
             cerrarCamara();
         }
+        function cerrarCamara() { if (streamActual) streamActual.getTracks().forEach(t => t.stop()); document.getElementById('camera-module').classList.add('hidden'); }
+        function borrarFoto() { document.getElementById('foto-preview-container').classList.add('hidden'); document.getElementById('foto-final').src = ""; }
 
-        function cerrarCamara() {
-            if (streamActual) streamActual.getTracks().forEach(t => t.stop());
-            document.getElementById('camera-module').classList.add('hidden');
-        }
-
-        function borrarFoto() { 
-            document.getElementById('foto-preview-container').classList.add('hidden'); 
-            document.getElementById('foto-final').src = ""; 
-        }
-
-        // DATOS
+        // --- BITÁCORA ---
         async function guardarDato() {
             const t = document.getElementById('titulo').value;
             const tp = document.getElementById('tipo').value;
             const f = document.getElementById('fecha').value;
             const img = document.getElementById('foto-final').src;
             if(!t) return;
-
-            const payload = { 
-                titulo: t, tipo: tp, fecha_objetivo: f || null, 
-                contenido: img.startsWith('data') ? img : null,
-                user_id: usuarioActual.id 
-            };
-
-            if (idEnEdicion) {
-                await supa.from('bitacora').update(payload).eq('id', idEnEdicion);
-                cancelarEdicion();
-            } else {
-                await supa.from('bitacora').insert([payload]);
-            }
-            
-            document.getElementById('titulo').value = '';
-            document.getElementById('fecha').value = '';
-            borrarFoto();
-            cargarDatos();
+            const payload = { titulo: t, tipo: tp, fecha_objetivo: f || null, contenido: img.startsWith('data') ? img : null, user_id: usuarioActual.id };
+            if (idEnEdicion) { await supa.from('bitacora').update(payload).eq('id', idEnEdicion); cancelarEdicion(); }
+            else { await supa.from('bitacora').insert([payload]); }
+            document.getElementById('titulo').value = ''; document.getElementById('fecha').value = ''; borrarFoto(); cargarDatos();
         }
-
         async function cargarDatos() {
             const { data } = await supa.from('bitacora').select('*').order('created_at', { ascending: false });
             const cont = document.getElementById('contenedor-datos');
             cont.innerHTML = '';
             data?.forEach(item => {
-                const card = document.createElement('div');
-                card.className = `bg-slate-900 border border-slate-800 p-5 rounded-2xl ${item.tipo === 'alarma' ? 'is-alarm' : ''}`;
-                card.innerHTML = `
+                const div = document.createElement('div');
+                div.className = `bg-slate-900 border border-slate-800 p-5 rounded-2xl ${item.tipo === 'alarma' ? 'is-alarm' : ''}`;
+                div.innerHTML = `
                     <div class="flex justify-between mb-2">
                         <span class="text-[9px] font-bold uppercase bg-slate-800 px-2 py-1 rounded text-slate-400">${item.tipo}</span>
                         <div class="flex gap-4">
-                            <button onclick="prepararEdicion('${item.id}', '${item.titulo}', '${item.tipo}', '${item.fecha_objetivo}', '${item.contenido || ""}')" class="text-cyan-500 text-[10px] font-bold">EDITAR</button>
+                            <button onclick="prepararEdicion('${item.id}','${item.titulo}','${item.tipo}','${item.fecha_objetivo}','${item.contenido||""}')" class="text-cyan-500 text-[10px] font-bold uppercase">Editar</button>
                             <button onclick="eliminar('${item.id}')" class="text-red-500 text-[10px] font-bold uppercase">Borrar</button>
                         </div>
                     </div>
                     <h3 class="text-white font-bold">${item.titulo}</h3>
-                    ${item.fecha_objetivo ? `<p class="text-xs text-amber-500 mt-1">⏰ ${new Date(item.fecha_objetivo).toLocaleString()}</p>` : ''}
-                    ${item.contenido ? `<img src="${item.contenido}" class="mt-3 rounded-xl w-full border border-slate-800">` : ''}
+                    ${item.contenido ? `<img src="${item.contenido}" class="mt-3 rounded-xl w-full">` : ''}
                 `;
-                cont.appendChild(card);
+                cont.appendChild(div);
             });
         }
 
-        function prepararEdicion(id, titulo, tipo, fecha, contenido) {
-            idEnEdicion = id;
-            document.getElementById('titulo').value = titulo;
-            document.getElementById('tipo').value = tipo;
-            document.getElementById('fecha').value = (fecha && fecha !== "null") ? fecha : "";
-            if (contenido && contenido !== "null") {
-                document.getElementById('foto-final').src = contenido;
-                document.getElementById('foto-preview-container').classList.remove('hidden');
-            }
+        // --- FINANZAS (LÓGICA) ---
+        async function cargarFinanzas() {
+            const { data: saldo } = await supa.from('finanzas').select('monto').eq('tipo', 'saldo').single();
+            document.getElementById('saldo-total').innerText = `$ ${saldo?.monto || 0}`;
+            
+            const { data: gastos } = await supa.from('finanzas').select('*').eq('tipo', 'gasto').order('created_at', { ascending: false });
+            const lista = document.getElementById('lista-gastos');
+            lista.innerHTML = '';
+            gastos?.forEach(g => {
+                lista.innerHTML += `
+                    <tr class="border-t border-slate-800">
+                        <td class="p-4 text-white">${g.descripcion}</td>
+                        <td class="p-4 text-right text-red-400 font-bold">-$ ${g.monto}</td>
+                        <td class="p-4 text-right"><button onclick="eliminarGasto('${g.id}', ${g.monto})" class="text-slate-600">✕</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function editarSaldo() {
+            const nuevo = prompt("¿Cuál es tu saldo actual?");
+            if(nuevo === null) return;
+            const { data } = await supa.from('finanzas').select('id').eq('tipo', 'saldo').single();
+            if(data) await supa.from('finanzas').update({ monto: nuevo }).eq('id', data.id);
+            else await supa.from('finanzas').insert([{ tipo: 'saldo', monto: nuevo, user_id: usuarioActual.id }]);
+            cargarFinanzas();
+        }
+
+        async function agregarGasto() {
+            const d = document.getElementById('gasto-desc').value;
+            const m = document.getElementById('gasto-monto').value;
+            if(!d || !m) return;
+            // 1. Registrar gasto
+            await supa.from('finanzas').insert([{ tipo: 'gasto', descripcion: d, monto: m, user_id: usuarioActual.id }]);
+            // 2. Restar del saldo
+            const { data: saldo } = await supa.from('finanzas').select('*').eq('tipo', 'saldo').single();
+            await supa.from('finanzas').update({ monto: (parseFloat(saldo.monto) - parseFloat(m)) }).eq('id', saldo.id);
+            
+            document.getElementById('gasto-desc').value = ''; document.getElementById('gasto-monto').value = '';
+            cargarFinanzas();
+        }
+
+        async function eliminarGasto(id, monto) {
+            if(!confirm("¿Borrar gasto?")) return;
+            const { data: saldo } = await supa.from('finanzas').select('*').eq('tipo', 'saldo').single();
+            await supa.from('finanzas').update({ monto: (parseFloat(saldo.monto) + parseFloat(monto)) }).eq('id', saldo.id);
+            await supa.from('finanzas').delete().eq('id', id);
+            cargarFinanzas();
+        }
+
+        // Funciones de apoyo
+        function prepararEdicion(id, t, tp, f, img) {
+            idEnEdicion = id; document.getElementById('titulo').value = t; document.getElementById('tipo').value = tp;
+            document.getElementById('fecha').value = f !== "null" ? f : "";
+            if(img) { document.getElementById('foto-final').src = img; document.getElementById('foto-preview-container').classList.remove('hidden'); }
             document.getElementById('form-container').classList.add('editing-mode');
-            document.getElementById('edit-indicator').classList.remove('hidden');
             document.getElementById('btn-save').innerText = "ACTUALIZAR";
             document.getElementById('btn-cancel').classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo(0,0);
         }
+        function cancelarEdicion() { idEnEdicion = null; document.getElementById('form-container').classList.remove('editing-mode'); document.getElementById('btn-save').innerText = "GUARDAR"; document.getElementById('btn-cancel').classList.add('hidden'); document.getElementById('titulo').value = ''; borrarFoto(); }
+        async function eliminar(id) { if(confirm("¿Borrar?")) { await supa.from('bitacora').delete().eq('id', id); cargarDatos(); } }
 
-        function cancelarEdicion() {
-            idEnEdicion = null;
-            document.getElementById('form-container').classList.remove('editing-mode');
-            document.getElementById('edit-indicator').classList.add('hidden');
-            document.getElementById('btn-save').innerText = "GUARDAR";
-            document.getElementById('btn-cancel').classList.add('hidden');
-            document.getElementById('titulo').value = '';
-            borrarFoto();
-        }
-
-        async function eliminar(id) {
-            if(confirm("¿Borrar nota?")) {
-                await supa.from('bitacora').delete().eq('id', id);
-                cargarDatos();
-            }
-        }
     </script>
 </body>
 </html>
