@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Vida OS - Finanzas Pro</title>
+    <title>Mi Vida OS - Pro Gold</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -17,15 +17,15 @@
         .gasto { color: #f87171; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-200 min-h-screen pb-32">
+<body class="bg-slate-950 text-slate-200 min-h-screen pb-32 font-sans">
 
     <div id="auth-screen" class="fixed inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center p-6 text-center">
         <h1 class="text-4xl font-black text-white mb-8 italic tracking-tighter">MI VIDA OS</h1>
         <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 w-full max-w-sm shadow-2xl">
             <input id="auth-user" type="text" placeholder="Usuario" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none focus:border-cyan-500 border border-transparent">
             <input id="auth-pin" type="password" inputmode="numeric" placeholder="PIN" class="w-full bg-slate-800 p-4 rounded-xl mb-6 text-white text-center text-2xl outline-none focus:border-cyan-500 border border-transparent">
-            <button onclick="gestionarAcceso('login')" class="w-full bg-white text-black font-black py-4 rounded-xl mb-3">ENTRAR</button>
-            <button onclick="gestionarAcceso('signup')" class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Crear cuenta</button>
+            <button onclick="gestionarAcceso('login')" class="w-full bg-white text-black font-black py-4 rounded-xl mb-3 active:scale-95 transition">ENTRAR</button>
+            <button onclick="gestionarAcceso('signup')" class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Crear cuenta nueva</button>
         </div>
     </div>
 
@@ -41,31 +41,33 @@
         <div id="form-container" class="bg-slate-900 border border-slate-800 p-5 rounded-2xl mb-8 shadow-2xl transition-all">
             <div id="foto-preview-container" class="hidden mb-4 relative">
                 <img id="foto-final" class="rounded-xl w-full border-2 border-cyan-500">
-                <button onclick="borrarFoto()" class="absolute top-2 right-2 bg-red-600 p-2 rounded-full text-white text-xs px-2">✕</button>
+                <button onclick="borrarFoto()" class="absolute top-2 right-2 bg-red-600 p-2 rounded-full text-white text-xs px-2 font-bold">✕</button>
             </div>
-            <input id="titulo" type="text" placeholder="Título de la nota..." class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none">
+            <input id="titulo" type="text" placeholder="¿Qué registramos?" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none border border-transparent focus:border-cyan-500">
             <div class="grid grid-cols-2 gap-3 mb-4">
-                <select id="tipo" class="bg-slate-800 p-3 rounded-xl text-white">
+                <select id="tipo" class="bg-slate-800 p-3 rounded-xl text-white font-bold">
                     <option value="nota">📝 Nota</option>
                     <option value="avance">🚀 Avance</option>
                     <option value="alarma">⏰ Alarma</option>
                 </select>
-                <input id="fecha" type="datetime-local" class="bg-slate-800 p-3 rounded-xl text-white">
+                <input id="fecha" type="datetime-local" class="bg-slate-800 p-3 rounded-xl text-white text-sm">
             </div>
             <div class="flex gap-2">
-                <button onclick="abrirCamara()" class="bg-slate-800 px-6 rounded-xl text-xl border border-slate-700">📷</button>
-                <button id="btn-save" onclick="guardarDato()" class="flex-1 bg-white text-black font-black py-4 rounded-xl shadow-lg">GUARDAR</button>
-                <button id="btn-cancel" onclick="cancelarEdicion()" class="hidden bg-slate-700 text-white px-4 rounded-xl">✕</button>
+                <button onclick="abrirCamara()" class="bg-slate-800 px-6 rounded-xl text-xl border border-slate-700 active:bg-slate-700">📷</button>
+                <button id="btn-save" onclick="guardarDato()" class="flex-1 bg-white text-black font-black py-4 rounded-xl shadow-lg active:scale-95 transition">GUARDAR</button>
+                <button id="btn-cancel" onclick="cancelarEdicion()" class="hidden bg-slate-700 text-white px-4 rounded-xl font-bold italic">✕</button>
             </div>
         </div>
+
         <div id="camera-module" class="hidden mb-6 bg-slate-900 p-4 rounded-3xl border border-slate-700 shadow-2xl">
             <video id="video-preview" autoplay playsinline class="mb-4"></video>
             <div class="flex gap-2">
-                <button onclick="cambiarCamara()" class="bg-slate-800 text-white px-4 rounded-2xl font-bold">🔄</button>
-                <button onclick="tomarFoto()" class="flex-1 bg-cyan-500 text-black font-black py-3 rounded-2xl uppercase">Capturar</button>
+                <button onclick="cambiarCamara()" class="bg-slate-800 text-white px-5 rounded-2xl font-bold border border-slate-700">🔄 GIRO</button>
+                <button onclick="tomarFoto()" class="flex-1 bg-cyan-500 text-black font-black py-3 rounded-2xl uppercase italic">Capturar</button>
                 <button onclick="cerrarCamara()" class="bg-red-900/30 text-red-500 px-4 rounded-2xl font-bold uppercase text-[10px]">Cerrar</button>
             </div>
         </div>
+
         <div id="contenedor-datos" class="space-y-4"></div>
     </main>
 
@@ -77,10 +79,10 @@
 
         <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden mb-6 shadow-xl">
             <div class="p-4 border-b border-slate-800 bg-slate-800/30 flex justify-between items-center">
-                <h3 class="text-[10px] font-black uppercase tracking-widest">Historial de Movimientos</h3>
-                <button onclick="ajustarSaldoDirecto()" class="text-[9px] bg-slate-700 px-2 py-1 rounded text-slate-400 font-bold uppercase">Reiniciar Saldo</button>
+                <h3 class="text-[10px] font-black uppercase tracking-widest">Movimientos</h3>
+                <button onclick="ajustarSaldoDirecto()" class="text-[9px] bg-slate-700 px-2 py-1 rounded text-slate-400 font-bold uppercase">Reiniciar</button>
             </div>
-            <div class="max-h-[40vh] overflow-y-auto">
+            <div class="max-h-[40vh] overflow-y-auto italic">
                 <table class="w-full text-left text-xs">
                     <tbody id="lista-movimientos"></tbody>
                 </table>
@@ -88,16 +90,16 @@
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-            <button onclick="registrarMovimiento('ingreso')" class="bg-green-600/20 border border-green-500/30 text-green-400 p-5 rounded-2xl font-black uppercase tracking-tighter flex flex-col items-center gap-2">
+            <button onclick="registrarMovimiento('ingreso')" class="bg-green-600/20 border border-green-500/30 text-green-400 p-5 rounded-2xl font-black uppercase tracking-tighter flex flex-col items-center gap-2 active:bg-green-600/30">
                 <span class="text-2xl">➕</span> Añadir Dinero
             </button>
-            <button onclick="registrarMovimiento('gasto')" class="bg-red-600/20 border border-red-500/30 text-red-400 p-5 rounded-2xl font-black uppercase tracking-tighter flex flex-col items-center gap-2">
+            <button onclick="registrarMovimiento('gasto')" class="bg-red-600/20 border border-red-500/30 text-red-400 p-5 rounded-2xl font-black uppercase tracking-tighter flex flex-col items-center gap-2 active:bg-red-600/30">
                 <span class="text-2xl">➖</span> Registrar Gasto
             </button>
         </div>
     </main>
 
-    <nav id="navbar" class="hidden fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-xl border-t border-slate-800 flex justify-around p-4 z-40">
+    <nav id="navbar" class="hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 flex justify-around p-4 z-40">
         <button onclick="cambiarSeccion('bitacora')" id="nav-bitacora" class="flex flex-col items-center gap-1 nav-active transition-all">
             <span class="text-xl">📝</span><span class="text-[9px] font-bold uppercase tracking-widest">Bitácora</span>
         </button>
@@ -119,13 +121,12 @@
         async function gestionarAcceso(modo) {
             const u = document.getElementById('auth-user').value.toLowerCase().trim();
             const p = document.getElementById('auth-pin').value;
-            if(!u || p.length < 4) return alert("Completa tus datos");
+            if(!u || p.length < 4) return alert("Completa Nombre y PIN");
             const mail = `${u}@mividaos.com`;
 
             if (modo === 'signup') {
                 const { error } = await supa.auth.signUp({ email: mail, password: p });
-                if (error) alert(error.message);
-                else alert("Registrado. Pulsa ENTRAR.");
+                if (error) alert(error.message); else alert("Usuario '" + u + "' creado. Pulsa ENTRAR.");
             } else {
                 const { data, error } = await supa.auth.signInWithPassword({ email: mail, password: p });
                 if (error) alert("Error de acceso");
@@ -134,8 +135,7 @@
                     document.getElementById('auth-screen').classList.add('hidden');
                     ['app-header', 'sec-bitacora', 'navbar'].forEach(id => document.getElementById(id).classList.remove('hidden'));
                     document.getElementById('user-display').innerText = u;
-                    cargarDatos();
-                    cargarFinanzas();
+                    cargarDatos(); cargarFinanzas();
                 }
             }
         }
@@ -148,97 +148,7 @@
             document.getElementById('section-title').innerText = sec === 'bitacora' ? 'Bitácora' : 'Finanzas';
         }
 
-        // --- FINANZAS (NUEVA LÓGICA) ---
-        async function cargarFinanzas() {
-            // Cargar saldo actual
-            const { data: saldoData } = await supa.from('finanzas').select('monto').eq('tipo', 'saldo').single();
-            const balance = saldoData?.monto || 0;
-            document.getElementById('saldo-total').innerText = `$ ${parseFloat(balance).toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
-            
-            // Cargar movimientos (solo ingresos y gastos)
-            const { data: movs } = await supa.from('finanzas').select('*').in('tipo', ['ingreso', 'gasto']).order('created_at', { ascending: false });
-            const lista = document.getElementById('lista-movimientos');
-            lista.innerHTML = '';
-            
-            movs?.forEach(m => {
-                const esIngreso = m.tipo === 'ingreso';
-                lista.innerHTML += `
-                    <tr class="border-b border-slate-800/50">
-                        <td class="p-4">
-                            <p class="text-white font-bold">${m.descripcion}</p>
-                            <p class="text-[8px] text-slate-500 uppercase">${new Date(m.created_at).toLocaleDateString()}</p>
-                        </td>
-                        <td class="p-4 text-right font-black ${esIngreso ? 'ingreso' : 'gasto'}">
-                            ${esIngreso ? '+' : '-'}$ ${m.monto}
-                        </td>
-                        <td class="p-2 text-right">
-                            <button onclick="eliminarMovimiento('${m.id}', '${m.tipo}', ${m.monto})" class="text-slate-700 text-xs">✕</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        async function registrarMovimiento(tipo) {
-            const pregunta = tipo === 'ingreso' ? "¿Cuánto dinero entra?" : "¿Cuánto gastaste?";
-            const preguntaDesc = tipo === 'ingreso' ? "¿De qué es este dinero?" : "¿En qué lo gastaste?";
-            
-            const monto = prompt(pregunta);
-            if (!monto || isNaN(monto)) return;
-            const desc = prompt(preguntaDesc);
-            if (!desc) return;
-
-            // 1. Guardar el movimiento
-            await supa.from('finanzas').insert([{ 
-                tipo: tipo, 
-                descripcion: desc, 
-                monto: parseFloat(monto), 
-                user_id: usuarioActual.id 
-            }]);
-
-            // 2. Actualizar el saldo fijo
-            const { data: saldoActual } = await supa.from('finanzas').select('*').eq('tipo', 'saldo').single();
-            let nuevoSaldo;
-            
-            if (!saldoActual) {
-                nuevoSaldo = tipo === 'ingreso' ? parseFloat(monto) : -parseFloat(monto);
-                await supa.from('finanzas').insert([{ tipo: 'saldo', monto: nuevoSaldo, user_id: usuarioActual.id }]);
-            } else {
-                nuevoSaldo = tipo === 'ingreso' ? 
-                    parseFloat(saldoActual.monto) + parseFloat(monto) : 
-                    parseFloat(saldoActual.monto) - parseFloat(monto);
-                await supa.from('finanzas').update({ monto: nuevoSaldo }).eq('id', saldoActual.id);
-            }
-
-            cargarFinanzas();
-        }
-
-        async function eliminarMovimiento(id, tipo, monto) {
-            if(!confirm("¿Eliminar este registro? El saldo se ajustará.")) return;
-            
-            const { data: saldoActual } = await supa.from('finanzas').select('*').eq('tipo', 'saldo').single();
-            // Revertir el efecto en el saldo
-            let nuevoSaldo = tipo === 'ingreso' ? 
-                parseFloat(saldoActual.monto) - parseFloat(monto) : 
-                parseFloat(saldoActual.monto) + parseFloat(monto);
-            
-            await supa.from('finanzas').update({ monto: nuevoSaldo }).eq('id', saldoActual.id);
-            await supa.from('finanzas').delete().eq('id', id);
-            cargarFinanzas();
-        }
-
-        async function ajustarSaldoDirecto() {
-            const nuevo = prompt("Escribe el saldo real que tienes ahora mismo:");
-            if (nuevo === null || isNaN(nuevo)) return;
-            
-            const { data } = await supa.from('finanzas').select('id').eq('tipo', 'saldo').single();
-            if(data) await supa.from('finanzas').update({ monto: nuevo }).eq('id', data.id);
-            else await supa.from('finanzas').insert([{ tipo: 'saldo', monto: nuevo, user_id: usuarioActual.id }]);
-            
-            cargarFinanzas();
-        }
-
-        // --- CÁMARA Y BITÁCORA (SE MANTIENE IGUAL) ---
+        // --- CÁMARA ---
         async function abrirCamara() {
             document.getElementById('camera-module').classList.remove('hidden');
             if (streamActual) streamActual.getTracks().forEach(t => t.stop());
@@ -261,12 +171,24 @@
         function cerrarCamara() { if (streamActual) streamActual.getTracks().forEach(t => t.stop()); document.getElementById('camera-module').classList.add('hidden'); }
         function borrarFoto() { document.getElementById('foto-preview-container').classList.add('hidden'); document.getElementById('foto-final').src = ""; }
 
+        // --- BITÁCORA Y ALARMA ---
         async function guardarDato() {
             const t = document.getElementById('titulo').value;
             const tp = document.getElementById('tipo').value;
             const f = document.getElementById('fecha').value;
             const img = document.getElementById('foto-final').src;
             if(!t) return;
+
+            // SINCRONIZACIÓN DE ALARMA CON CALENDARIO (SISTEMA)
+            if (tp === 'alarma' && f) {
+                const inicio = f.replace(/-|:|\.\d\d\d/g, "") + "00Z";
+                const fin = f.replace(/-|:|\.\d\d\d/g, "") + "05Z"; // Duración tentativa
+                const googleUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t)}&dates=${inicio}/${fin}&details=Alarma+MiVidaOS&sf=true&output=xml`;
+                if(confirm("Se sincronizará con tu calendario para que suene aunque el celular esté bloqueado. ¿Continuar?")) {
+                    window.open(googleUrl, '_blank');
+                }
+            }
+
             const payload = { titulo: t, tipo: tp, fecha_objetivo: f || null, contenido: img.startsWith('data') ? img : null, user_id: usuarioActual.id };
             if (idEnEdicion) { await supa.from('bitacora').update(payload).eq('id', idEnEdicion); cancelarEdicion(); }
             else { await supa.from('bitacora').insert([payload]); }
@@ -288,23 +210,84 @@
                             <button onclick="eliminar('${item.id}')" class="text-red-500 text-[10px] font-bold uppercase">Borrar</button>
                         </div>
                     </div>
-                    <h3 class="text-white font-bold">${item.titulo}</h3>
-                    ${item.contenido ? `<img src="${item.contenido}" class="mt-3 rounded-xl w-full">` : ''}
+                    <h3 class="text-white font-bold italic">${item.titulo}</h3>
+                    ${item.fecha_objetivo ? `<p class="text-[10px] text-amber-500 font-bold mt-1 uppercase tracking-tighter">⏰ ${new Date(item.fecha_objetivo).toLocaleString()}</p>` : ''}
+                    ${item.contenido ? `<img src="${item.contenido}" class="mt-3 rounded-xl w-full border border-slate-800">` : ''}
                 `;
                 cont.appendChild(div);
             });
         }
+
+        // --- FINANZAS ---
+        async function cargarFinanzas() {
+            const { data: saldoData } = await supa.from('finanzas').select('monto').eq('tipo', 'saldo').single();
+            const balance = saldoData?.monto || 0;
+            document.getElementById('saldo-total').innerText = `$ ${parseFloat(balance).toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+            
+            const { data: movs } = await supa.from('finanzas').select('*').in('tipo', ['ingreso', 'gasto']).order('created_at', { ascending: false });
+            const lista = document.getElementById('lista-movimientos');
+            lista.innerHTML = '';
+            movs?.forEach(m => {
+                const esIngreso = m.tipo === 'ingreso';
+                lista.innerHTML += `
+                    <tr class="border-b border-slate-800/50">
+                        <td class="p-4 text-white">
+                            <p class="font-bold">${m.descripcion}</p>
+                            <p class="text-[7px] text-slate-500 uppercase">${new Date(m.created_at).toLocaleDateString()}</p>
+                        </td>
+                        <td class="p-4 text-right font-black ${esIngreso ? 'ingreso' : 'gasto'}">
+                            ${esIngreso ? '+' : '-'}$ ${m.monto}
+                        </td>
+                        <td class="p-2 text-right"><button onclick="eliminarMovimiento('${m.id}', '${m.tipo}', ${m.monto})" class="text-slate-700 text-xs">✕</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function registrarMovimiento(tipo) {
+            const m = prompt(tipo === 'ingreso' ? "¿Cuánto dinero entra?" : "¿Cuánto gastaste?");
+            if (!m || isNaN(m)) return;
+            const d = prompt(tipo === 'ingreso' ? "¿De qué es?" : "¿En qué?");
+            if (!d) return;
+
+            await supa.from('finanzas').insert([{ tipo: tipo, descripcion: d, monto: parseFloat(m), user_id: usuarioActual.id }]);
+            const { data: sA } = await supa.from('finanzas').select('*').eq('tipo', 'saldo').single();
+            let nS = !sA ? (tipo === 'ingreso' ? parseFloat(m) : -parseFloat(m)) : (tipo === 'ingreso' ? parseFloat(sA.monto) + parseFloat(m) : parseFloat(sA.monto) - parseFloat(m));
+            if(!sA) await supa.from('finanzas').insert([{ tipo: 'saldo', monto: nS, user_id: usuarioActual.id }]);
+            else await supa.from('finanzas').update({ monto: nS }).eq('id', sA.id);
+            cargarFinanzas();
+        }
+
+        async function eliminarMovimiento(id, t, m) {
+            if(!confirm("¿Eliminar registro?")) return;
+            const { data: sA } = await supa.from('finanzas').select('*').eq('tipo', 'saldo').single();
+            let nS = t === 'ingreso' ? parseFloat(sA.monto) - m : parseFloat(sA.monto) + m;
+            await supa.from('finanzas').update({ monto: nS }).eq('id', sA.id);
+            await supa.from('finanzas').delete().eq('id', id);
+            cargarFinanzas();
+        }
+
+        async function ajustarSaldoDirecto() {
+            const n = prompt("Saldo real:");
+            if (n === null || isNaN(n)) return;
+            const { data } = await supa.from('finanzas').select('id').eq('tipo', 'saldo').single();
+            if(data) await supa.from('finanzas').update({ monto: n }).eq('id', data.id);
+            else await supa.from('finanzas').insert([{ tipo: 'saldo', monto: n, user_id: usuarioActual.id }]);
+            cargarFinanzas();
+        }
+
+        // --- APOYO ---
         function prepararEdicion(id, t, tp, f, img) {
             idEnEdicion = id; document.getElementById('titulo').value = t; document.getElementById('tipo').value = tp;
             document.getElementById('fecha').value = f !== "null" ? f : "";
-            if(img) { document.getElementById('foto-final').src = img; document.getElementById('foto-preview-container').classList.remove('hidden'); }
+            if(img && img !== "null") { document.getElementById('foto-final').src = img; document.getElementById('foto-preview-container').classList.remove('hidden'); }
             document.getElementById('form-container').classList.add('editing-mode');
             document.getElementById('btn-save').innerText = "ACTUALIZAR";
             document.getElementById('btn-cancel').classList.remove('hidden');
             window.scrollTo(0,0);
         }
         function cancelarEdicion() { idEnEdicion = null; document.getElementById('form-container').classList.remove('editing-mode'); document.getElementById('btn-save').innerText = "GUARDAR"; document.getElementById('btn-cancel').classList.add('hidden'); document.getElementById('titulo').value = ''; borrarFoto(); }
-        async function eliminar(id) { if(confirm("¿Borrar?")) { await supa.from('bitacora').delete().eq('id', id); cargarDatos(); } }
+        async function eliminar(id) { if(confirm("¿Borrar nota?")) { await supa.from('bitacora').delete().eq('id', id); cargarDatos(); } }
 
     </script>
 </body>
