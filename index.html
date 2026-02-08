@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Vida OS - Inversiones MX</title>
+    <title>Mi Vida OS - Ultimate Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -17,6 +17,7 @@
         .gasto { color: #f87171; }
         @keyframes pulse-red { 0% { background: #0f172a; } 50% { background: #7f1d1d; } 100% { background: #0f172a; } }
         .alarm-ringing { animation: pulse-red 0.5s infinite; }
+        .habit-btn.active { background: #22d3ee; color: #000; box-shadow: 0 0 15px #22d3ee; }
     </style>
 </head>
 <body id="app-body" class="bg-slate-950 text-slate-200 min-h-screen pb-32 font-sans">
@@ -27,7 +28,7 @@
             <input id="auth-user" type="text" placeholder="Usuario" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none">
             <input id="auth-pin" type="password" inputmode="numeric" placeholder="PIN" class="w-full bg-slate-800 p-4 rounded-xl mb-6 text-white text-center text-2xl outline-none">
             <button onclick="gestionarAcceso('login')" class="w-full bg-white text-black font-black py-4 rounded-xl mb-3">ENTRAR</button>
-            <button onclick="gestionarAcceso('signup')" class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Crear cuenta</button>
+            <button onclick="gestionarAcceso('signup')" class="text-slate-500 text-[10px] font-bold uppercase">Crear cuenta</button>
         </div>
     </div>
 
@@ -40,10 +41,29 @@
     </header>
 
     <main id="sec-bitacora" class="hidden max-w-xl mx-auto px-6">
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl mb-4 flex justify-between items-center">
+            <p class="text-[8px] font-black uppercase text-slate-500">Hábitos Hoy:</p>
+            <div class="flex gap-2">
+                <button onclick="toggleHabit(this)" class="habit-btn w-8 h-8 rounded-full border border-slate-700 text-[10px] flex items-center justify-center">💧</button>
+                <button onclick="toggleHabit(this)" class="habit-btn w-8 h-8 rounded-full border border-slate-700 text-[10px] flex items-center justify-center">🏋️</button>
+                <button onclick="toggleHabit(this)" class="habit-btn w-8 h-8 rounded-full border border-slate-700 text-[10px] flex items-center justify-center">📖</button>
+                <button onclick="toggleHabit(this)" class="habit-btn w-8 h-8 rounded-full border border-slate-700 text-[10px] flex items-center justify-center">💻</button>
+                <button onclick="toggleHabit(this)" class="habit-btn w-8 h-8 rounded-full border border-slate-700 text-[10px] flex items-center justify-center">🍎</button>
+            </div>
+        </div>
+
         <div id="form-container" class="bg-slate-900 border border-slate-800 p-5 rounded-2xl mb-8 shadow-2xl transition-all">
+            <div class="flex justify-around mb-4 bg-slate-800/50 p-2 rounded-xl">
+                <button onclick="setMood('🔥')" class="mood-btn text-xl opacity-40 hover:opacity-100 transition">🔥</button>
+                <button onclick="setMood('😎')" class="mood-btn text-xl opacity-40 hover:opacity-100 transition">😎</button>
+                <button onclick="setMood('😐')" class="mood-btn text-xl opacity-40 hover:opacity-100 transition">😐</button>
+                <button onclick="setMood('😴')" class="mood-btn text-xl opacity-40 hover:opacity-100 transition">😴</button>
+                <button onclick="setMood('😰')" class="mood-btn text-xl opacity-40 hover:opacity-100 transition">😰</button>
+            </div>
+
             <div id="foto-preview-container" class="hidden mb-4 relative">
                 <img id="foto-final" class="rounded-xl w-full border-2 border-cyan-500">
-                <button onclick="borrarFoto()" class="absolute top-2 right-2 bg-red-600 p-2 rounded-full text-white text-xs px-2 font-bold">✕</button>
+                <button onclick="borrarFoto()" class="absolute top-2 right-2 bg-red-600 p-2 rounded-full text-white text-xs px-2">✕</button>
             </div>
             <input id="titulo" type="text" placeholder="¿Qué registramos?" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none">
             <div class="grid grid-cols-2 gap-3 mb-4">
@@ -57,17 +77,19 @@
             <div class="flex gap-2">
                 <button onclick="abrirCamara()" class="bg-slate-800 px-6 rounded-xl text-xl border border-slate-700">📷</button>
                 <button id="btn-save" onclick="guardarDato()" class="flex-1 bg-white text-black font-black py-4 rounded-xl shadow-lg">GUARDAR</button>
-                <button id="btn-cancel" onclick="cancelarEdicion()" class="hidden bg-slate-700 text-white px-4 rounded-xl">✕</button>
+                <button id="btn-cancel" onclick="cancelarEdicion()" class="hidden bg-slate-700 text-white px-4 rounded-xl font-bold italic">✕</button>
             </div>
         </div>
-        <div id="camera-module" class="hidden mb-6 bg-slate-900 p-4 rounded-3xl border border-slate-700 shadow-2xl">
+
+        <div id="camera-module" class="hidden mb-6 bg-slate-900 p-4 rounded-3xl border border-slate-700">
             <video id="video-preview" autoplay playsinline class="mb-4"></video>
             <div class="flex gap-2">
-                <button onclick="cambiarCamara()" class="bg-slate-800 text-white px-5 rounded-2xl font-bold border border-slate-700">🔄 GIRO</button>
+                <button onclick="cambiarCamara()" class="bg-slate-800 text-white px-5 rounded-2xl font-bold">🔄</button>
                 <button onclick="tomarFoto()" class="flex-1 bg-cyan-500 text-black font-black py-3 rounded-2xl uppercase italic">Capturar</button>
-                <button onclick="cerrarCamara()" class="bg-red-900/30 text-red-500 px-4 rounded-2xl font-bold text-[10px]">Cerrar</button>
+                <button onclick="cerrarCamara()" class="bg-red-900/30 text-red-500 px-4 rounded-2xl text-[10px]">Cerrar</button>
             </div>
         </div>
+
         <div id="contenedor-datos" class="space-y-4"></div>
     </main>
 
@@ -77,15 +99,23 @@
             <h2 id="saldo-total" class="text-5xl font-black tracking-tighter text-white italic">$ 0.00</h2>
         </div>
 
+        <div class="bg-cyan-950/30 border border-cyan-900/50 p-5 rounded-3xl mb-6 shadow-xl text-center">
+            <p class="text-[9px] font-black uppercase text-cyan-500 mb-2">Meta de Libertad Financiera</p>
+            <div class="flex justify-center gap-2 mb-3">
+                <input id="meta-mensual" type="number" placeholder="Ej: 10000" class="bg-slate-900 border border-slate-800 p-2 rounded-xl text-xs text-center w-32 outline-none text-white font-bold" value="10000" oninput="calcularLibertad()">
+                <p class="text-xs text-slate-500 pt-2 italic">MXN/mes</p>
+            </div>
+            <p id="texto-libertad" class="text-[10px] text-slate-300 px-4 leading-relaxed">Necesitas <span class="font-bold text-white">$800,000</span> invertidos en Nu (15%) para ganar esto sin trabajar.</p>
+        </div>
+
         <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden mb-6 shadow-xl p-4">
-            <h3 class="text-[10px] font-black uppercase tracking-widest text-cyan-500 mb-4 px-2">Proyección de Crecimiento Anual</h3>
-            <div class="space-y-3" id="tabla-bancos">
-                </div>
+            <h3 class="text-[10px] font-black uppercase tracking-widest text-cyan-500 mb-4 px-2 italic">Proyección de Crecimiento Anual</h3>
+            <div class="space-y-3" id="tabla-bancos"></div>
         </div>
 
         <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden mb-6 shadow-xl">
             <div class="p-4 border-b border-slate-800 bg-slate-800/30 flex justify-between items-center">
-                <h3 class="text-[10px] font-black uppercase tracking-widest">Movimientos Recientes</h3>
+                <h3 class="text-[10px] font-black uppercase tracking-widest">Movimientos</h3>
                 <button onclick="ajustarSaldoDirecto()" class="text-[9px] bg-slate-700 px-2 py-1 rounded text-slate-400 font-bold uppercase">Reiniciar</button>
             </div>
             <div class="max-h-[30vh] overflow-y-auto italic">
@@ -107,10 +137,10 @@
 
     <nav id="navbar" class="hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 flex justify-around p-4 z-40">
         <button onclick="cambiarSeccion('bitacora')" id="nav-bitacora" class="flex flex-col items-center gap-1 nav-active transition-all">
-            <span class="text-xl">📝</span><span class="text-[9px] font-bold uppercase tracking-widest">Bitácora</span>
+            <span class="text-xl">📝</span><span class="text-[9px] font-bold uppercase">Bitácora</span>
         </button>
         <button onclick="cambiarSeccion('finanzas')" id="nav-finanzas" class="flex flex-col items-center gap-1 text-slate-500 transition-all">
-            <span class="text-xl">💰</span><span class="text-[9px] font-bold uppercase tracking-widest">Finanzas</span>
+            <span class="text-xl">💰</span><span class="text-[9px] font-bold uppercase">Finanzas</span>
         </button>
     </nav>
 
@@ -120,73 +150,136 @@
         const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
         
         let idEnEdicion = null; let usuarioActual = null; let streamActual; let modoCamara = "environment";
+        let currentMood = "😎"; 
+        let currentBalance = 0;
+
         const sonidoAlarma = new Audio('https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3');
         sonidoAlarma.loop = true;
 
-        // BANCOS Y TASAS MÉXICO
+        // BANCOS MX
         const bancosMX = [
-            { nombre: "Nu México (Cajita)", tasa: 0.15, color: "text-purple-500" },
+            { nombre: "Nu México", tasa: 0.15, color: "text-purple-500" },
             { nombre: "Finsus", tasa: 0.14, color: "text-blue-400" },
             { nombre: "CetesDirecto", tasa: 0.11, color: "text-green-500" },
-            { nombre: "Mercado Pago", tasa: 0.10, color: "text-blue-500" },
-            { nombre: "BBVA / Banorte", tasa: 0.02, color: "text-slate-400" }
+            { nombre: "Mercado Pago", tasa: 0.10, color: "text-blue-500" }
         ];
+
+        // FUNCIONES NUEVAS
+        function toggleHabit(btn) { btn.classList.toggle('active'); }
+        
+        function setMood(emoji) {
+            currentMood = emoji;
+            document.querySelectorAll('.mood-btn').forEach(b => b.style.opacity = '0.4');
+            event.target.style.opacity = '1';
+        }
+
+        function calcularLibertad() {
+            const deseado = document.getElementById('meta-mensual').value;
+            const necesario = (deseado * 12) / 0.15; // Basado en tasa Nu 15%
+            document.getElementById('texto-libertad').innerHTML = `Necesitas <span class="font-bold text-white">$${necesario.toLocaleString('es-MX')}</span> invertidos al 15% para ganar esto sin trabajar.`;
+        }
 
         async function gestionarAcceso(modo) {
             const u = document.getElementById('auth-user').value.toLowerCase().trim();
             const p = document.getElementById('auth-pin').value;
-            if(!u || p.length < 4) return alert("Nombre y PIN");
+            if(!u || p.length < 4) return;
             const mail = `${u}@mividaos.com`;
             if (modo === 'signup') {
-                const { error } = await supa.auth.signUp({ email: mail, password: p });
-                if (error) alert(error.message); else alert("Cuenta creada.");
+                await supa.auth.signUp({ email: mail, password: p });
+                alert("Creado. Entra.");
             } else {
                 const { data, error } = await supa.auth.signInWithPassword({ email: mail, password: p });
-                if (error) alert("Error"); else {
+                if (!error) {
                     usuarioActual = data.user;
                     document.getElementById('auth-screen').classList.add('hidden');
                     ['app-header', 'sec-bitacora', 'navbar'].forEach(id => document.getElementById(id).classList.remove('hidden'));
                     document.getElementById('user-display').innerText = u;
-                    cargarDatos(); cargarFinanzas();
+                    cargarDatos(); cargarFinanzas(); calcularLibertad();
                 }
             }
         }
 
         async function cargarFinanzas() {
             const { data: sD } = await supa.from('finanzas').select('monto').eq('tipo', 'saldo').single();
-            const saldoActual = parseFloat(sD?.monto || 0);
-            document.getElementById('saldo-total').innerText = `$ ${saldoActual.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+            currentBalance = parseFloat(sD?.monto || 0);
+            document.getElementById('saldo-total').innerText = `$ ${currentBalance.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
             
-            // Renderizar Crecimiento Bancos
             const tablaBancos = document.getElementById('tabla-bancos');
             tablaBancos.innerHTML = '';
-            bancosMX.forEach(banco => {
-                const gananciaAnual = saldoActual * banco.tasa;
+            bancosMX.forEach(b => {
+                const gA = currentBalance * b.tasa;
                 tablaBancos.innerHTML += `
                     <div class="flex justify-between items-center bg-slate-800/40 p-3 rounded-xl border border-slate-800">
-                        <div>
-                            <p class="text-xs font-bold text-white">${banco.nombre}</p>
-                            <p class="text-[9px] ${banco.color} font-black uppercase">Tasa: ${(banco.tasa * 100)}% Anual</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-xs font-black text-green-400">+$ ${gananciaAnual.toLocaleString('es-MX', {minimumFractionDigits: 2})}</p>
-                            <p class="text-[8px] text-slate-500 uppercase font-bold">Ganancia/Año</p>
-                        </div>
-                    </div>
-                `;
+                        <div><p class="text-xs font-bold text-white">${b.nombre}</p><p class="text-[9px] ${b.color} font-black uppercase">${(b.tasa*100)}% Anual</p></div>
+                        <div class="text-right"><p class="text-xs font-black text-green-400">+$ ${gA.toLocaleString('es-MX')}</p><p class="text-[8px] text-slate-500 uppercase">Año</p></div>
+                    </div>`;
             });
 
-            // Movimientos (Igual)
             const { data: movs } = await supa.from('finanzas').select('*').in('tipo', ['ingreso', 'gasto']).order('created_at', { ascending: false });
             const lista = document.getElementById('lista-movimientos');
             lista.innerHTML = '';
             movs?.forEach(m => {
                 const esI = m.tipo === 'ingreso';
-                lista.innerHTML += `<tr class="border-b border-slate-800/50"><td class="p-4 text-white"><p class="font-bold">${m.descripcion}</p></td><td class="p-4 text-right font-black ${esI?'ingreso':'gasto'}">${esI?'+':'-'}$ ${m.monto}</td><td class="p-2"><button onclick="eliminarMovimiento('${m.id}','${m.tipo}',${m.monto})" class="text-slate-700">✕</button></td></tr>`;
+                lista.innerHTML += `<tr class="border-b border-slate-800/50"><td class="p-4 text-white"><p class="font-bold">${m.descripcion}</p></td><td class="p-4 text-right font-black ${esI?'ingreso':'gasto'}">${esI?'+':'-'}$ ${m.monto}</td><td class="p-2"><button onclick="eliminarMovimiento('${m.id}','${m.tipo}',${m.monto})" class="text-slate-700 text-xs">✕</button></td></tr>`;
             });
         }
 
-        // --- RESTO DE FUNCIONES (ALARMAS, CÁMARA, MOVIMIENTOS) SE MANTIENEN IGUAL ---
+        // --- ALARMAS Y BITÁCORA (INTEGRANDO MOOD) ---
+        function programarAlarmaLocal(id, titulo, fecha) {
+            const target = new Date(fecha).getTime();
+            const tiempoRestante = target - new Date().getTime();
+            if (tiempoRestante > 0) {
+                setTimeout(() => {
+                    document.getElementById('app-body').classList.add('alarm-ringing');
+                    sonidoAlarma.play();
+                    setTimeout(() => {
+                        alert("🚨 ALARMA: " + titulo.toUpperCase());
+                        sonidoAlarma.pause();
+                        sonidoAlarma.currentTime = 0;
+                        document.getElementById('app-body').classList.remove('alarm-ringing');
+                    }, 200);
+                }, tiempoRestante);
+            }
+        }
+
+        async function guardarDato() {
+            const t = document.getElementById('titulo').value;
+            const tp = document.getElementById('tipo').value;
+            const f = document.getElementById('fecha').value;
+            const img = document.getElementById('foto-final').src;
+            if(!t) return;
+
+            // Guardamos el título con el emoji del mood al inicio
+            const tituloConMood = `${currentMood} ${t}`;
+
+            const payload = { titulo: tituloConMood, tipo: tp, fecha_objetivo: f || null, contenido: img.startsWith('data') ? img : null, user_id: usuarioActual.id };
+            
+            let res;
+            if (idEnEdicion) { 
+                res = await supa.from('bitacora').update(payload).eq('id', idEnEdicion).select();
+                cancelarEdicion();
+            } else { 
+                res = await supa.from('bitacora').insert([payload]).select();
+            }
+
+            if (tp === 'alarma' && f && res.data) programarAlarmaLocal(res.data[0].id, t, f);
+
+            document.getElementById('titulo').value = ''; document.getElementById('fecha').value = ''; borrarFoto(); cargarDatos();
+        }
+
+        async function cargarDatos() {
+            const { data } = await supa.from('bitacora').select('*').order('created_at', { ascending: false });
+            const cont = document.getElementById('contenedor-datos'); cont.innerHTML = '';
+            data?.forEach(item => {
+                if (item.tipo === 'alarma' && item.fecha_objetivo) programarAlarmaLocal(item.id, item.titulo, item.fecha_objetivo);
+                const div = document.createElement('div');
+                div.className = `bg-slate-900 border border-slate-800 p-5 rounded-2xl ${item.tipo === 'alarma' ? 'is-alarm' : ''}`;
+                div.innerHTML = `<div class="flex justify-between mb-2"><span class="text-[9px] font-bold uppercase bg-slate-800 px-2 py-1 rounded text-slate-400">${item.tipo}</span><div class="flex gap-4"><button onclick="prepararEdicion('${item.id}','${item.titulo}','${item.tipo}','${item.fecha_objetivo}','${item.contenido||""}')" class="text-cyan-500 text-[10px] font-bold uppercase">Editar</button><button onclick="eliminar('${item.id}')" class="text-red-500 text-[10px] font-bold uppercase">Borrar</button></div></div><h3 class="text-white font-bold italic">${item.titulo}</h3>${item.fecha_objetivo ? `<p class="text-[10px] text-amber-500 font-bold mt-1 uppercase">⏰ ${new Date(item.fecha_objetivo).toLocaleString()}</p>` : ''}${item.contenido ? `<img src="${item.contenido}" class="mt-3 rounded-xl w-full border border-slate-800">` : ''}`;
+                cont.appendChild(div);
+            });
+        }
+
+        // --- CÁMARA Y MOVIMIENTOS (Igual) ---
         function cambiarSeccion(sec) {
             document.getElementById('sec-bitacora').classList.toggle('hidden', sec !== 'bitacora');
             document.getElementById('sec-finanzas').classList.toggle('hidden', sec !== 'finanzas');
@@ -228,9 +321,7 @@
             streamActual = await navigator.mediaDevices.getUserMedia({ video: { facingMode: modoCamara } });
             document.getElementById('video-preview').srcObject = streamActual;
         }
-
         function cambiarCamara() { modoCamara = (modoCamara === "user") ? "environment" : "user"; abrirCamara(); }
-
         function tomarFoto() {
             const video = document.getElementById('video-preview');
             const canvas = document.createElement('canvas');
@@ -242,32 +333,8 @@
             document.getElementById('foto-preview-container').classList.remove('hidden');
             cerrarCamara();
         }
-
         function cerrarCamara() { if (streamActual) streamActual.getTracks().forEach(t => t.stop()); document.getElementById('camera-module').classList.add('hidden'); }
         function borrarFoto() { document.getElementById('foto-preview-container').classList.add('hidden'); document.getElementById('foto-final').src = ""; }
-
-        async function guardarDato() {
-            const t = document.getElementById('titulo').value;
-            const tp = document.getElementById('tipo').value;
-            const f = document.getElementById('fecha').value;
-            const img = document.getElementById('foto-final').src;
-            if(!t) return;
-            const payload = { titulo: t, tipo: tp, fecha_objetivo: f || null, contenido: img.startsWith('data') ? img : null, user_id: usuarioActual.id };
-            if (idEnEdicion) { await supa.from('bitacora').update(payload).eq('id', idEnEdicion); cancelarEdicion(); }
-            else { await supa.from('bitacora').insert([payload]); }
-            document.getElementById('titulo').value = ''; document.getElementById('fecha').value = ''; borrarFoto(); cargarDatos();
-        }
-
-        async function cargarDatos() {
-            const { data } = await supa.from('bitacora').select('*').order('created_at', { ascending: false });
-            const cont = document.getElementById('contenedor-datos'); cont.innerHTML = '';
-            data?.forEach(item => {
-                const div = document.createElement('div');
-                div.className = `bg-slate-900 border border-slate-800 p-5 rounded-2xl ${item.tipo === 'alarma' ? 'is-alarm' : ''}`;
-                div.innerHTML = `<div class="flex justify-between mb-2"><span class="text-[9px] font-bold uppercase bg-slate-800 px-2 py-1 rounded text-slate-400">${item.tipo}</span><div class="flex gap-4"><button onclick="prepararEdicion('${item.id}','${item.titulo}','${item.tipo}','${item.fecha_objetivo}','${item.contenido||""}')" class="text-cyan-500 text-[10px] font-bold uppercase">Editar</button><button onclick="eliminar('${item.id}')" class="text-red-500 text-[10px] font-bold uppercase">Borrar</button></div></div><h3 class="text-white font-bold italic">${item.titulo}</h3>${item.fecha_objetivo ? `<p class="text-[10px] text-amber-500 font-bold mt-1 uppercase">⏰ ${new Date(item.fecha_objetivo).toLocaleString()}</p>` : ''}${item.contenido ? `<img src="${item.contenido}" class="mt-3 rounded-xl w-full border border-slate-800">` : ''}`;
-                cont.appendChild(div);
-            });
-        }
 
         function prepararEdicion(id, t, tp, f, img) {
             idEnEdicion = id; document.getElementById('titulo').value = t; document.getElementById('tipo').value = tp;
@@ -278,7 +345,6 @@
             document.getElementById('btn-cancel').classList.remove('hidden');
             window.scrollTo(0,0);
         }
-
         function cancelarEdicion() { idEnEdicion = null; document.getElementById('form-container').classList.remove('editing-mode'); document.getElementById('btn-save').innerText = "GUARDAR"; document.getElementById('btn-cancel').classList.add('hidden'); document.getElementById('titulo').value = ''; borrarFoto(); }
         async function eliminar(id) { if(confirm("¿Borrar?")) { await supa.from('bitacora').delete().eq('id', id); cargarDatos(); } }
 
